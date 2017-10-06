@@ -10,8 +10,8 @@ import requests
 import six
 from PIL import Image
 from lxml.html import fromstring
-from home.parser.data import Xpath
-from home.parser.settings import PATH_TEMP
+from .data import Base
+from .settings import PATH_TEMP
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.apps import apps
@@ -23,7 +23,7 @@ class Parser(object):
 
     def __new__(cls, *args, **kwargs):
         for key, attr in cls.__dict__.items():
-            if isinstance(attr, Xpath) and attr.__dict__['body']:
+            if isinstance(attr, Base) and attr.__dict__['body']:
                 break
         else:
             raise ValueError('В класе: {} должно быть поле с атрибутом body'.format(cls))
@@ -95,7 +95,7 @@ class Parser(object):
                     self.data[attr] = None
                     continue
                 else:
-                    raise IndexError(e)
+                    raise ValueError('Проверьте правильность инициализации поля {} класа {}'.format(attr, self.__class__))
             if attr == self.image and self.data[attr]:
                 self.data[attr] = self.uploaded_image(
                     self.data[attr],
@@ -107,10 +107,10 @@ class Parser(object):
         self.url = url
         html = self.get_html()
         for key, attr in self.__class__.__dict__.items():
-            if isinstance(attr, Xpath):
+            if isinstance(attr, Base):
                 if attr.body:
-                    if attr.href:
-                        self.page_url = html.cssselect(attr.href)[0].get("href")
+                    if attr.start_url:
+                        self.page_url = html.cssselect(attr.start_url)[0].get("href")
                         self.url = '{0.scheme}://{0.netloc}{1}'.format(urlsplit(self.url), self.page_url)
                         html = self.get_html()
                     self.block = html.cssselect(self.__getattribute__(key))[0]
@@ -119,10 +119,10 @@ class Parser(object):
                     self.data[key] = '.text'
                 elif attr.text_content:
                     self.data[key] = '.text_content()'
-                elif attr.data:
+                elif attr.attr_data:
                     if attr.img:
                         self.image = key
-                    self.data[key] = '.get("{}")'.format(attr.data)
+                    self.data[key] = '.get("{}")'.format(attr.attr_data)
                 self.attributs.add(key)
         return self.__do_perform()
 
