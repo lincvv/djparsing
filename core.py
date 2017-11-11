@@ -3,14 +3,15 @@ import importlib
 import os
 from abc import ABCMeta, abstractclassmethod
 from io import BytesIO
-from urllib.parse import urlsplit
+from urllib.error import URLError
+from urllib.parse import urlsplit, urljoin
 from urllib.request import urlretrieve, urlopen
 import lxml
 import requests
 import six
 from PIL import Image
 from lxml.html import fromstring
-from .data import Base
+from .data import BaseCssSelect
 from .settings import PATH_TEMP
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.files.uploadedfile import TemporaryUploadedFile
@@ -18,28 +19,32 @@ from django.apps import apps
 
 
 class Parser(object):
-    __slots__ = ['url', 'data', 'attributs', 'block', 'image', 'page_url']
+    __slots__ = ['url', 'data', 'attributs', 'block', 'image', 'base_domain', 'list_add_domain',
+                 'data_to_db', 'html']
     __metaclass__ = ABCMeta
 
     def __new__(cls, *args, **kwargs):
         for key, attr in cls.__dict__.items():
-            if isinstance(attr, Base) and attr.__dict__['body']:
+            if isinstance(attr, BaseCssSelect) and getattr(attr, 'body', False):
                 break
         else:
-            raise ValueError('В класе: {} должно быть поле с атрибутом body'.format(cls))
+            raise ValueError('In the {} the required "body" field'.format(cls))
         obj = super().__new__(cls)
-        obj.data = {}
         return obj
 
     def __init__(self, url=None, **kwargs):
-        self.image = None
+        self.data_to_db = dict()
+        self.base_domain = None
         self.block = str()
-        self.page_url = str()
         self.attributs = set()
+        self.list_add_domain = list()
+        self.image = None
         self.url = url
-        for key, value in six.iteritems(kwargs):
+        self.html = None
+        for key, value in kwargs.items():
             setattr(self, key, value)
 
+    @property
     def get_html(self) -> lxml.html.HtmlElement:
         response = requests.get(self.url)
         return fromstring(response.text)
@@ -48,10 +53,14 @@ class Parser(object):
     def uploaded_image(url, name):
         try:
             os.chdir(PATH_TEMP)
-        except:
+        except :
             os.makedirs(PATH_TEMP)
+            os.chdir(PATH_TEMP)
         finally:
-            urlretrieve(url, name)
+            try:
+                urlretrieve(url, name)
+            except URLError:
+                return None
             image = Image.open(name)
             image_io = BytesIO()
             image.save(image_io, "png", optimize=True)
@@ -63,9 +72,9 @@ class Parser(object):
         try:
             url_img = elem.cssselect(css_path)[0].get("src")
         except IndexError as e:
-            self.data['img'] = None
+            self.data_to_db['img'] = None
         else:
-            self.data['img'] = self.uploaded_image(url_img, '{}.jpg'.format(self.data['title']))
+            self.data_to_db['img'] = self.uploaded_image(url_img, '{}.jpg'.format(self.data_to_db['title']))
 
     def create(self):
         try:
@@ -73,58 +82,77 @@ class Parser(object):
         except () as e:
             raise ValueError(e)
         else:
-            query = model.objects.filter(title__iexact=self.data['title'])
+            query = model.objects.filter(title__iexact=self.data_to_db['title'])
         if query.exists():
             return
         else:
-            return model.objects.create(**self.data)
+            return model.objects.create(**self.data_to_db)
 
     @classmethod
     def set_obj(cls, url, flag):
         obj = cls(url=url)
-        obj.data[flag] = True
+        obj.data_to_db[flag] = True
         return obj
 
+    def _get_except_val_err(self, attr):
+        raise ValueError('Check the initialization of the {} field in {}'.format(attr, self.__class__))
+
     def __do_perform(self):
-        command = 'self.block.cssselect(self.__getattribute__(attr))[0]{}'
-        for attr in self.attributs:
+        command = 'self.block.cssselect(self.__getattribute__(attr_model))[0]{}'
+        for attr_model in self.attributs:
             try:
-                self.data[attr] = eval(command.format(self.data[attr]))
-            except IndexError as e:
-                if attr == self.image:
-                    self.data[attr] = None
+                self.data_to_db[attr_model] = eval(command.format(self.data_to_db[attr_model]))
+            except IndexError:
+                if attr_model == self.image:
+                    self.data_to_db[attr_model] = None
                     continue
                 else:
-                    raise ValueError('Проверьте правильность инициализации поля {} класа {}'.format(attr, self.__class__))
-            if attr == self.image and self.data[attr]:
-                self.data[attr] = self.uploaded_image(
-                    self.data[attr],
-                    '{}.jpg'.format(hashlib.sha1(self.data[attr].encode('utf-8')).hexdigest())
+                    self._get_except_val_err(attr_model)
+            if attr_model in self.list_add_domain:
+                self.data_to_db[attr_model] = urljoin(self.base_domain, self.data_to_db[attr_model])
+            if attr_model == self.image and self.data_to_db[attr_model]:
+                self.data_to_db[attr_model] = self.uploaded_image(
+                    self.data_to_db[attr_model],
+                    '{}.jpg'.format(hashlib.sha1(self.data_to_db[attr_model].encode('utf-8')).hexdigest())
                 )
         return self.create()
 
     def run(self, url):
         self.url = url
-        html = self.get_html()
+        self.html = self.get_html
         for key, attr in self.__class__.__dict__.items():
-            if isinstance(attr, Base):
-                if attr.body:
-                    if attr.start_url:
-                        self.page_url = html.cssselect(attr.start_url)[0].get("href")
-                        self.url = '{0.scheme}://{0.netloc}{1}'.format(urlsplit(self.url), self.page_url)
-                        html = self.get_html()
-                    self.block = html.cssselect(self.__getattribute__(key))[0]
+            if isinstance(attr, BaseCssSelect):
+                if getattr(attr, 'add_domain', False):
+                    self.base_domain = '{0.scheme}://{0.netloc}'.format(urlsplit(self.url))
+                    self.list_add_domain.append(key)
+                if getattr(attr, 'body', False):
+                    self._set_block_html(key, attr)
+                    #### 2
                     continue
-                elif attr.text:
-                    self.data[key] = '.text'
-                elif attr.text_content:
-                    self.data[key] = '.text_content()'
-                elif attr.attr_data:
-                    if attr.img:
+                elif getattr(attr, 'text', False):
+                    self.data_to_db[key] = '.text'
+                elif getattr(attr, 'text_content', False):
+                    self.data_to_db[key] = '.text_content()'
+                elif getattr(attr, 'attr_data', False):
+                    if getattr(attr, 'img', False):
                         self.image = key
-                    self.data[key] = '.get("{}")'.format(attr.attr_data)
+                    self.data_to_db[key] = '.get("{}")'.format(attr.attr_data)
                 self.attributs.add(key)
         return self.__do_perform()
+
+    def _set_block_html(self, key, attr):
+        try:
+            if getattr(attr, 'start_url', False):
+                page_url = self.html.cssselect(attr.start_url)[0].get("href")
+                if self.base_domain:
+                    self.url = '{0}{1}'.format(self.base_domain, page_url)
+                else:
+                    self.url = self.page_url
+                self.html = self.get_html
+            self.block = self.html.cssselect(self.__getattribute__(key))[0]
+        except IndexError:
+            self._get_except_val_err(attr)
+
 
     # @abstractclassmethod
     # async def parsing(cls, url):
