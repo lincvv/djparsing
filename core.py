@@ -8,13 +8,11 @@ from urllib.parse import urlsplit, urljoin
 from urllib.request import urlretrieve, urlopen
 import lxml
 import requests
-import six
 from PIL import Image
 from lxml.html import fromstring
 from .data import BaseCssSelect
 from .settings import PATH_TEMP
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.apps import apps
 
 
@@ -117,7 +115,7 @@ class Parser(object):
                 )
         return self.create()
 
-    def run(self, url):
+    def run(self, url=None):
         self.url = url
         self.html = self.get_html
         for key, attr in self.__class__.__dict__.items():
@@ -147,7 +145,7 @@ class Parser(object):
                 if self.base_domain:
                     self.url = '{0}{1}'.format(self.base_domain, page_url)
                 else:
-                    self.url = self.page_url
+                    self.url = page_url
                 self.html = self.get_html
             self.block = self.html.cssselect(self.__getattribute__(key))[0]
         except IndexError:
