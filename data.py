@@ -6,6 +6,7 @@ class BaseCssSelect(object):
     def __init__(self, add_domain=False, *args, **kwargs):
         self.attr_name = None
         self.add_domain = add_domain
+        self.attr_data  = None
 
     def __set__(self, instance, value):
         value = self._check_to_field_type(instance, value)
@@ -21,29 +22,28 @@ class BaseCssSelect(object):
 
 
 class TextCssSelect(BaseCssSelect):
+    text = True
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.text = True
 
 
 class TextContentCssSelect(BaseCssSelect):
+    text_content = True
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.text_content = True
 
 
 class BodyCSSSelect(BaseCssSelect):
+    body = True
     def __init__(self, start_url=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.start_url = start_url
-        self.body = True
 
 
 class AttrCSSSelect(BaseCssSelect):
-    VALID_ATTRIBUTE = 'attr_data'
+    NAME_ATTRIBUTE = 'attr_data'
 
     def __init__(self, attr_data=None, *args, **kwargs):
-        # print(self.__class__, '->', self.__class__.__bases__[0])
         try:
             attr_data = self._check_attr_data_is_required(attr_data=attr_data, *args, **kwargs)
         except ():
@@ -54,21 +54,19 @@ class AttrCSSSelect(BaseCssSelect):
 
     def _check_attr_data_is_required(self, *args, **kwargs):
         """check the required attribute attr_data and type"""
-        kwargs_attr = kwargs.get(self.VALID_ATTRIBUTE, False)
+        kwargs_attr = kwargs.get(self.NAME_ATTRIBUTE, False)
         if not kwargs_attr and not args:
-            raise AttributeError('object {} has a required attribute {}'.format(self, self.VALID_ATTRIBUTE))
+            raise AttributeError('object {} has a required attribute {}'.format(self, self.NAME_ATTRIBUTE))
         if kwargs_attr and not isinstance(kwargs_attr, str) or args and not isinstance(args[0], str):
-            self._get_attr_type_error(self.VALID_ATTRIBUTE)
-        # if args and not isinstance(args[0], str):
-        #     self.attr_error()
+            self._get_attr_type_error(self.NAME_ATTRIBUTE)
         return kwargs_attr if kwargs_attr else args[0]
 
 
 class ImgCSSSelect(AttrCSSSelect):
+    img = True
     def __init__(self, *args, **kwargs):
         def_kwargs = self.__set_default_attr(*args, **kwargs)
         super().__init__(*args, **def_kwargs)
-        self.img = True
 
     def __set_default_attr(self, *args, **kwargs) -> dict:
         """Set the default attr data attribute to 'src' for the ImgCSSSelect field"""
@@ -76,17 +74,8 @@ class ImgCSSSelect(AttrCSSSelect):
             if self._check_attr_data_is_required(*args, **kwargs):
                 return kwargs
         except AttributeError:
-            kwargs.update({self.VALID_ATTRIBUTE: 'src'})
+            kwargs.update({self.NAME_ATTRIBUTE: 'src'})
             return kwargs
-
-# class XpathValidated(abc.ABC, XpathBase):
-#     def __set__(self, instance, value):
-#         value = self.validate(instance, value)
-#         super().__set__(instance, value)
-#
-#     @abc.abstractmethod
-#     def validate(self, instance, value):
-#         pass
 
 
 def init(**kwargs):
