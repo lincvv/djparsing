@@ -1,7 +1,7 @@
 from .settings import ATTR_LIST_INIT
 
 
-class BaseCssSelect(object):
+class BaseCSSSelect(object):
     """base class cssselect fields"""
     def __init__(self, add_domain=False, *args, **kwargs):
         self.attr_name = None
@@ -21,36 +21,32 @@ class BaseCssSelect(object):
         return value
 
 
-class TextCssSelect(BaseCssSelect):
+class TextCSSSelect(BaseCSSSelect):
     text = True
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
-class TextContentCssSelect(BaseCssSelect):
+class TextContentCSSSelect(BaseCSSSelect):
     text_content = True
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
-class BodyCSSSelect(BaseCssSelect):
+class BodyCSSSelect(BaseCSSSelect):
     body = True
     def __init__(self, start_url=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.start_url = start_url
 
 
-class AttrCSSSelect(BaseCssSelect):
+class AttrCSSSelect(BaseCSSSelect):
     NAME_ATTRIBUTE = 'attr_data'
 
     def __init__(self, attr_data=None, *args, **kwargs):
-        try:
-            attr_data = self._check_attr_data_is_required(attr_data=attr_data, *args, **kwargs)
-        except ():
-            pass
-        else:
-            super().__init__(*args, **kwargs)
-            self.attr_data = attr_data
+        attr_data = self._check_attr_data_is_required(attr_data=attr_data, *args, **kwargs)
+        super().__init__(*args, **kwargs)
+        self.attr_data = attr_data
 
     def _check_attr_data_is_required(self, *args, **kwargs):
         """check the required attribute attr_data and type"""
@@ -86,7 +82,7 @@ def init(**kwargs):
         except() as e:
             raise AttributeError(e)
         for key, attr in cls.__dict__.items():
-            if isinstance(attr, (BaseCssSelect,)):
+            if isinstance(attr, (BaseCSSSelect,)):
                 attr.attr_name = key
         return cls
     return dec

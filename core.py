@@ -11,7 +11,7 @@ from urllib.request import urlretrieve, urlopen
 from PIL import Image
 from lxml.html import fromstring
 # from memory_profiler import profile
-from .data import BaseCssSelect
+from .data import BaseCSSSelect
 from .settings import PATH_TEMP
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.apps import apps
@@ -24,7 +24,7 @@ class Parser(object):
 
     def __new__(cls, *args, **kwargs):
         for key, attr in cls.__dict__.items():
-            if isinstance(attr, BaseCssSelect) and getattr(attr, 'body', False):
+            if isinstance(attr, BaseCSSSelect) and getattr(attr, 'body', False):
                 break
         else:
             raise ValueError('In the {} the required "body" field'.format(cls))
@@ -117,7 +117,7 @@ class Parser(object):
     def _check_attr(self, html):
         attributs = set()
         for key, attr in self.__class__.__dict__.items():
-            if isinstance(attr, BaseCssSelect):
+            if isinstance(attr, BaseCSSSelect):
                 if getattr(attr, 'add_domain', False):
                     self.base_domain = '{0.scheme}://{0.netloc}'.format(urlsplit(self.url))
                     self.list_domain.append(key)

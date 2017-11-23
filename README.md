@@ -21,12 +21,12 @@ class MyModel(models.Model):
     flag = models.BooleanField(default=False)
 ```
 ```python
-@init(model='Mymodel', app='my_app')
+@init(model='MyModel', app='my_app')
 class MyParserClass(Parser):
     body = BodyCSSSelect()
-    text = TextContentCssSelect()
+    text = TextContentCSSSelect()
     source = AttrCSSSelect(attr_data='href') #Or set the first argument AttrCSSSelect('href')
-    title = TextCssSelect()
+    title = TextCSSSelect()
     img = ImgCSSSelect('src') #The default is src, so the argument is optional. can ImgCSSSelect()
     
 pars_obj = MyParserClass(
