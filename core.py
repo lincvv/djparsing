@@ -1,19 +1,20 @@
 import hashlib
-# import importlib
 import os
-import lxml
-import requests
-from abc import ABCMeta, abstractclassmethod
+from abc import ABCMeta
 from io import BytesIO
 from urllib.error import URLError
 from urllib.parse import urlsplit, urljoin
-from urllib.request import urlretrieve, urlopen
+from urllib.request import urlretrieve
+import lxml
+import requests
 from PIL import Image
 from lxml.html import fromstring
 # from memory_profiler import profile
+
 from .data import BaseCSSSelect
 from .settings import PATH_TEMP
 from django.core.files.uploadedfile import InMemoryUploadedFile
+# from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.apps import apps
 
 
@@ -50,7 +51,7 @@ class Parser(object):
     def uploaded_image(url, name):
         try:
             os.chdir(PATH_TEMP)
-        except :
+        except FileNotFoundError:
             os.makedirs(PATH_TEMP)
             os.chdir(PATH_TEMP)
         finally:
@@ -68,7 +69,7 @@ class Parser(object):
     def set_image(self, elem, css_path):
         try:
             url_img = elem.cssselect(css_path)[0].get("src")
-        except IndexError as e:
+        except IndexError:
             self.data_to_db['img'] = None
         else:
             self.data_to_db['img'] = self.uploaded_image(url_img, '{}.jpg'.format(self.data_to_db['title']))
@@ -135,7 +136,7 @@ class Parser(object):
                 attributs.add(key)
         return attributs
 
-    def run(self,**kwargs):
+    def run(self, **kwargs):
         if not self.url:
             try:
                 self.url = kwargs['url']
@@ -143,7 +144,6 @@ class Parser(object):
                 raise ValueError('not attribute url') from e
         attr_to_pars = self._check_attr(self.get_html)
         return self.__do_perform(attr_to_pars)
-
 
     def _set_block_html(self, key, attr, html):
         try:
@@ -158,3 +158,7 @@ class Parser(object):
         except IndexError:
             self._get_except_val_err(attr)
 
+
+            # @abstractclassmethod
+            # async def parsing(cls, url):
+            #     pass
