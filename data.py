@@ -3,6 +3,7 @@ from .settings import ATTR_LIST_INIT
 
 class BaseCSSSelect(object):
     """base class cssselect fields"""
+    element_method = None
 
     def __init__(self, add_domain=False, *args, **kwargs):
         self.attr_name = None
@@ -23,11 +24,11 @@ class BaseCSSSelect(object):
 
 
 class TextCSSSelect(BaseCSSSelect):
-    text = True
+    element_method = '.text'
 
 
 class TextContentCSSSelect(BaseCSSSelect):
-    text_content = True
+    element_method = '.text_content()'
 
 
 class BodyCSSSelect(BaseCSSSelect):
@@ -40,11 +41,13 @@ class BodyCSSSelect(BaseCSSSelect):
 
 class AttrCSSSelect(BaseCSSSelect):
     NAME_ATTRIBUTE = 'attr_data'
+    element_method = '.get("{}")'
 
     def __init__(self, attr_data=None, *args, **kwargs):
         attr_data = self._check_attr_data_is_required(attr_data=attr_data, *args, **kwargs)
         super().__init__(*args, **kwargs)
-        self.attr_data = attr_data
+        # self.attr_data = attr_data
+        self.element_method = self.element_method.format(attr_data)
 
     def _check_attr_data_is_required(self, *args, **kwargs):
         """check the required attribute attr_data and type"""

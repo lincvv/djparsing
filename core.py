@@ -48,6 +48,16 @@ class Parser(object):
         return fromstring(response.text)
 
     @staticmethod
+    def get_domain(url):
+        return '{0.scheme}://{0.netloc}'.format(urlsplit(url))
+
+    @classmethod
+    def set_obj(cls, url, flag):
+        obj = cls(url=url)
+        obj.data_to_db[flag] = True
+        return obj
+
+    @staticmethod
     def uploaded_image(url, name):
         try:
             os.chdir(PATH_TEMP)
@@ -66,13 +76,8 @@ class Parser(object):
             os.remove(os.path.join(PATH_TEMP, name))
         return InMemoryUploadedFile(image_io, None, name, None, None, None)
 
-    def set_image(self, elem, css_path):
-        try:
-            url_img = elem.cssselect(css_path)[0].get("src")
-        except IndexError:
-            self.data_to_db['img'] = None
-        else:
-            self.data_to_db['img'] = self.uploaded_image(url_img, '{}.jpg'.format(self.data_to_db['title']))
+    def _get_except_val_err(self, attr):
+        raise ValueError('Check the initialization of the {} field in {}'.format(attr, self.__class__))
 
     def create(self):
         try:
@@ -86,14 +91,13 @@ class Parser(object):
         else:
             return model.objects.create(**self.data_to_db)
 
-    @classmethod
-    def set_obj(cls, url, flag):
-        obj = cls(url=url)
-        obj.data_to_db[flag] = True
-        return obj
-
-    def _get_except_val_err(self, attr):
-        raise ValueError('Check the initialization of the {} field in {}'.format(attr, self.__class__))
+    # def set_image(self, elem, css_path):
+    #     try:
+    #         url_img = elem.cssselect(css_path)[0].get("src")
+    #     except IndexError:
+    #         self.data_to_db['img'] = None
+    #     else:
+    #         self.data_to_db['img'] = self.uploaded_image(url_img, '{}.jpg'.format(self.data_to_db['title']))
 
     def __do_perform(self, attr_pars):
         command = 'self.block.cssselect(self.__getattribute__(attr_model))[0]{}'
@@ -113,26 +117,22 @@ class Parser(object):
                     self.data_to_db[attr_model],
                     '{}.jpg'.format(hashlib.sha1(self.data_to_db[attr_model].encode('utf-8')).hexdigest())
                 )
+        print(self.data_to_db)
         return self.create()
 
     def _check_attr(self, html):
         attributs = set()
         for key, attr in self.__class__.__dict__.items():
             if isinstance(attr, BaseCSSSelect):
-                if getattr(attr, 'add_domain', False):
-                    self.base_domain = '{0.scheme}://{0.netloc}'.format(urlsplit(self.url))
+                if attr.add_domain is not None:
+                    self.base_domain = self.get_domain(self.url)
                     self.list_domain.append(key)
-                if getattr(attr, 'body', False):
+                if hasattr(attr, 'body'):
                     self._set_block_html(key, attr, html)
                     continue
-                if getattr(attr, 'text', False):
-                    self.data_to_db[key] = '.text'
-                if getattr(attr, 'text_content', False):
-                    self.data_to_db[key] = '.text_content()'
-                if getattr(attr, 'attr_data', False):
-                    if getattr(attr, 'img', False):
-                        self.image = key
-                    self.data_to_db[key] = '.get("{}")'.format(attr.attr_data)
+                if hasattr(attr, 'img'):
+                    self.image = key
+                self.data_to_db[key] = attr.element_method
                 attributs.add(key)
         return attributs
 
@@ -140,8 +140,8 @@ class Parser(object):
         if not self.url:
             try:
                 self.url = kwargs['url']
-            except KeyError as e:
-                raise ValueError('not attribute url') from e
+            except KeyError:
+                raise ValueError('not attribute url')
         attr_to_pars = self._check_attr(self.get_html)
         return self.__do_perform(attr_to_pars)
 
@@ -159,6 +159,8 @@ class Parser(object):
             self._get_except_val_err(attr)
 
 
+
+########################################################################################################
             # @abstractclassmethod
             # async def parsing(cls, url):
             #     pass
