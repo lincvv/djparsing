@@ -10,11 +10,9 @@ import requests
 from PIL import Image
 from lxml.html import fromstring
 # from memory_profiler import profile
-
 from .data import BaseCSSSelect
 from .settings import PATH_TEMP
 from django.core.files.uploadedfile import InMemoryUploadedFile
-# from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.apps import apps
 
 
