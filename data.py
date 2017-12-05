@@ -1,4 +1,3 @@
-from .settings import ATTR_LIST_INIT
 
 
 class BaseCSSSelect(object):
@@ -6,8 +5,8 @@ class BaseCSSSelect(object):
     element_method = None
 
     def __init__(self, add_domain=False, *args, **kwargs):
-        self.attr_name = None
         self.add_domain = add_domain
+        self.attr_name = None
         self.attr_data = None
 
     def __set__(self, instance, value):
@@ -76,16 +75,4 @@ class ImgCSSSelect(AttrCSSSelect):
             return kwargs
 
 
-def init(**kwargs):
-    def dec(cls):
-        try:
-            for attr in ATTR_LIST_INIT:
-                setattr(cls, attr, kwargs[attr])
-        except() as e:
-            raise AttributeError(e)
-        for key, attr in cls.__dict__.items():
-            if isinstance(attr, (BaseCSSSelect,)):
-                attr.attr_name = key
-        return cls
 
-    return dec
