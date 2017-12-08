@@ -1,3 +1,4 @@
+import copy
 import hashlib
 import os
 # from abc import ABCMeta
@@ -19,6 +20,7 @@ from django.apps import apps
 
 
 def init(**kwargs):
+
     def dec(cls):
         if hasattr(cls, 'Meta'):
             meta = cls.Meta
@@ -34,17 +36,28 @@ def init(**kwargs):
 class ParserMeta(type):
 
     def __new__(cls, name, bases, attrs):
-        for key, attr in attrs.items():
+
+        parents = [base for base in bases if isinstance(base, ParserMeta)]
+        if not parents:
+            return super().__new__(cls, name, bases, attrs)
+
+        new_cls = super().__new__(cls, name, bases, attrs)
+        for key, attr in new_cls.__dict__.items():
             if isinstance(attr, (BaseCSSSelect,)):
                 attr.attr_name = key
 
-        if hasattr(cls, 'Meta'):
-            meta = cls.Meta
-            if hasattr(meta, 'field_coincidence') and hasattr(meta, 'coincidence'):
-                pass
-            else:
-                raise ValueError('')
-        return super().__new__(cls, name, bases, attrs)
+        for base in reversed(parents):
+            if not attrs.get('Meta', None):
+                if hasattr(base, 'Meta'):
+                    base_meta = copy.deepcopy(base.Meta)
+                    setattr(new_cls, 'Meta', base_meta)
+            for key, attr in base.__dict__.items():
+                if isinstance(attr, BaseCSSSelect):
+                    if key not in new_cls.__dict__:
+                        parent_fields = copy.deepcopy(key)
+                        setattr(new_cls, parent_fields, attr)
+
+        return new_cls
 
 
 class Parser(object, metaclass=ParserMeta):
