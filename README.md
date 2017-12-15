@@ -42,7 +42,7 @@ pars_obj = MyParserClass(
         )
 pars_obj.run(url='http://site/')
 ```
-####Note: a model for saving data can be specified in Meta
+#### Note: a model for saving data can be specified in Meta
 ```cython
 class Meta:
     model = MyModel # the decorator @init is not needed
