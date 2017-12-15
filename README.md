@@ -29,6 +29,10 @@ class MyParserClass(Parser):
     title = TextCSSSelect()
     img = ImgCSSSelect('src') #The default is src, so the argument is optional. can ImgCSSSelect()
     
+    class Meta:
+        coincidence = ['Python', 'Django', 'Питон', 'ML'] # a list of words for the condition that the data fit
+        field_coincidence = 'title' # field to which a list of words is used
+    
 pars_obj = MyParserClass(
         body='.content-list__item',
         text='.post__body_crop > .post__text',
@@ -37,6 +41,11 @@ pars_obj = MyParserClass(
         img='.post__body_crop > .post__text img'
         )
 pars_obj.run(url='http://site/')
+```
+####Note: a model for saving data can be specified in Meta
+```cython
+class Meta:
+    model = MyModel # the decorator @init is not needed
 ```
     If you need to install an additional field in the database:
 ```python
