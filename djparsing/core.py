@@ -2,10 +2,10 @@ import copy
 import hashlib
 import os
 # from abc import ABCMeta
+import shutil
 from io import BytesIO
 from urllib.error import URLError
 from urllib.parse import urlsplit, urljoin
-from urllib.request import urlretrieve
 import lxml
 import requests
 from PIL import Image
@@ -62,7 +62,7 @@ class ParserMeta(type):
 
 class Parser(object, metaclass=ParserMeta):
     __slots__ = ('url', 'data', 'block', 'image', 'base_domain', 'list_domain',
-                 'data_to_db', 'attrib',)
+                 'data_to_db', 'attrib', 'page_url')
 
     def __init__(self, url=None, **kwargs):
         self.data_to_db = dict()
@@ -70,6 +70,8 @@ class Parser(object, metaclass=ParserMeta):
         self.url = url
         self.attrib = set()
         self.image = None
+        self.base_domain = None
+        self.page_url = None
         for key, value in kwargs.items():
             setattr(self, key, value)
         for key, attr in self.__class__.__dict__.items():
@@ -129,7 +131,12 @@ class Parser(object, metaclass=ParserMeta):
             os.chdir(PATH_TEMP)
         finally:
             try:
-                urlretrieve(url, name)
+                resp_img = requests.get(url, stream=True)
+                if resp_img.status_code == 200:
+                    with open(name, 'wb') as img:
+                        resp_img.raw.decode_content = True
+                        shutil.copyfileobj(resp_img.raw, img)
+                # urlretrieve(url, name)
             except URLError:
                 return None
             image = Image.open(name)
@@ -169,7 +176,7 @@ class Parser(object, metaclass=ParserMeta):
         except IndexError:
             self._get_except_val_err(field)
 
-    def gen_pars_res(self):
+    def _gen_pars_res(self):
 
         if hasattr(self.__class__, 'Meta') and hasattr(self.__class__.Meta, 'field_coincidence'):
             list_coincidence = getattr(self.__class__.Meta, 'coincidence')
@@ -179,6 +186,9 @@ class Parser(object, metaclass=ParserMeta):
                 return
         command = 'self.block.cssselect(self.__getattribute__(attr_model))[0]{}'
         for attr_model in self.attrib:
+            if self.__class__.__dict__[attr_model].page_url:
+                self.data_to_db[attr_model] = self.url
+                continue
             try:
                 pars_res = eval(command.format(self.get_element_method(attr_model)))
             except IndexError:
@@ -198,7 +208,7 @@ class Parser(object, metaclass=ParserMeta):
             yield pars_res
 
     def run(self):
-        for res in self.gen_pars_res():
+        for res in self._gen_pars_res():
             # print(res)
             pass
         if self.data_to_db is None:
