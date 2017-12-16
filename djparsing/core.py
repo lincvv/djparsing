@@ -14,7 +14,7 @@ from lxml.html import fromstring
 from requests.exceptions import MissingSchema
 from .data import BaseCSSSelect
 from .settings import PATH_TEMP
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import InMemoryUploadedFile, UploadedFile
 # from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.apps import apps
 
@@ -123,7 +123,7 @@ class Parser(object, metaclass=ParserMeta):
         return obj
 
     @staticmethod
-    def uploaded_image(url, name):
+    def uploaded_image(url, name) -> UploadedFile or None:
         try:
             os.chdir(PATH_TEMP)
         except FileNotFoundError:
