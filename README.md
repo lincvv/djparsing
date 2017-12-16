@@ -27,6 +27,7 @@ class MyModel(models.Model):
 ```python
 from djparsing.core import Parser, init
 from djparsing import data
+
 @init(model='MyModel', app='my_app')
 class MyParserClass(Parser):
     body = data.BodyCSSSelect()
