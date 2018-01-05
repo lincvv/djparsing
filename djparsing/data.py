@@ -1,6 +1,6 @@
 
 
-class BaseCSSSelect(object):
+class BaseCssSelect(object):
     """base class cssselect fields"""
     element_method = None
 
@@ -23,15 +23,15 @@ class BaseCSSSelect(object):
         return value
 
 
-class TextCSSSelect(BaseCSSSelect):
+class TextCssSelect(BaseCssSelect):
     element_method = '.text'
 
 
-class TextContentCSSSelect(BaseCSSSelect):
+class TextContentCssSelect(BaseCssSelect):
     element_method = '.text_content()'
 
 
-class BodyCSSSelect(BaseCSSSelect):
+class BodyCssSelect(BaseCssSelect):
     body = True
 
     def __init__(self, start_url=None, *args, **kwargs):
@@ -39,7 +39,7 @@ class BodyCSSSelect(BaseCSSSelect):
         self.start_url = start_url
 
 
-class AttrCSSSelect(BaseCSSSelect):
+class AttrCssSelect(BaseCssSelect):
     NAME_ATTRIBUTE = 'attr_data'
     element_method = '.get("{}")'
 
@@ -59,7 +59,7 @@ class AttrCSSSelect(BaseCSSSelect):
         return kwargs_attr if kwargs_attr else args[0]
 
 
-class ImgCSSSelect(AttrCSSSelect):
+class ImgCSSSelect(AttrCssSelect):
     img = True
 
     def __init__(self, *args, **kwargs):

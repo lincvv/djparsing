@@ -45,9 +45,10 @@ pars_obj = MyParserClass(
         text='.post__body_crop > .post__text',
         source='a.post__title_link',
         title='a.post__title_link',
-        img='.post__body_crop > .post__text img'
+        img='.post__body_crop > .post__text img',
+        url='http://site/'
         )
-pars_obj.run(url='http://site/')
+pars_obj.run()
 ```
 Note: a model for saving data can be specified in Meta class
 ------
@@ -57,8 +58,8 @@ class Meta:
 ```
     If you need to install an additional field in the database:
 ```python
-pars_obj.data_to_db['flag'] = True
-pars_obj.run(url='http://site/')
+pars_obj.data['flag'] = True
+pars_obj.run()
 ```
 Attributs
 =========

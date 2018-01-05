@@ -12,9 +12,11 @@ from PIL import Image
 from lxml.html import fromstring
 # from memory_profiler import profile
 from requests.exceptions import MissingSchema
-from .data import BaseCSSSelect
+
+from .options import Options
+from .data import BaseCssSelect
 from .settings import PATH_TEMP
-from django.core.files.uploadedfile import InMemoryUploadedFile, UploadedFile
+from django.core.files.uploadedfile import InMemoryUploadedFile
 # from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.apps import apps
 
@@ -43,7 +45,7 @@ class ParserMeta(type):
 
         new_cls = super().__new__(cls, name, bases, attrs)
         for key, attr in new_cls.__dict__.items():
-            if isinstance(attr, (BaseCSSSelect,)):
+            if isinstance(attr, (BaseCssSelect,)):
                 attr.attr_name = key
 
         for base in reversed(parents):
@@ -52,39 +54,36 @@ class ParserMeta(type):
                     base_meta = copy.deepcopy(base.Meta)
                     setattr(new_cls, 'Meta', base_meta)
             for key, attr in base.__dict__.items():
-                if isinstance(attr, BaseCSSSelect):
+                if isinstance(attr, BaseCssSelect):
                     if key not in new_cls.__dict__:
                         parent_fields = copy.deepcopy(key)
                         setattr(new_cls, parent_fields, attr)
+        meta = getattr(new_cls, 'Meta', None)
+        setattr(new_cls, '_opt', Options(meta))
 
         return new_cls
 
 
 class Parser(object, metaclass=ParserMeta):
-    __slots__ = ('url', 'data', 'block', 'image', 'base_domain', 'list_domain',
-                 'data_to_db', 'attrib', 'page_url')
+    __slots__ = ('url', 'data', 'block', 'page_url', '_opt')
 
     def __init__(self, url=None, **kwargs):
-        self.data_to_db = dict()
-        self.list_domain = list()
+        self.data = dict()
         self.url = url
-        self.attrib = set()
-        self.image = None
-        self.base_domain = None
-        self.page_url = None
+        # self.page_url = None
         for key, value in kwargs.items():
             setattr(self, key, value)
         for key, attr in self.__class__.__dict__.items():
-            if isinstance(attr, BaseCSSSelect):
+            if isinstance(attr, BaseCssSelect):
                 if attr.add_domain:
-                    self.base_domain = self.get_domain(self.url)
-                    self.list_domain.append(key)
+                    self._opt.base_domain = self._opt.get_domain(self.url)
+                    self._opt.list_domain.append(key)
                 if hasattr(attr, 'body'):
                     self.block = self._set_block_html(key, attr)
                     continue
                 if hasattr(attr, 'img'):
-                    self.image = key
-                self.attrib.add(key)
+                    self._opt.image = key
+                self._opt.cls_attr .add(key)
         if not hasattr(self, 'block'):
             raise ValueError('In the {} the required "body" field'.format(self.__class__))
 
@@ -92,8 +91,8 @@ class Parser(object, metaclass=ParserMeta):
         try:
             if getattr(attr, 'start_url', False):
                 page_url = self.get_html.cssselect(attr.start_url)[0].get("href")
-                if self.base_domain:
-                    self.url = '{0}{1}'.format(self.base_domain, page_url)
+                if self._opt.base_domain:
+                    self.url = '{0}{1}'.format(self._opt.base_domain, page_url)
                 else:
                     self.url = page_url
             return self.get_html.cssselect(self.__getattribute__(key))[0]
@@ -112,18 +111,14 @@ class Parser(object, metaclass=ParserMeta):
         response = requests.get(self.url)
         return fromstring(response.text)
 
-    @staticmethod
-    def get_domain(url):
-        return '{0.scheme}://{0.netloc}'.format(urlsplit(url))
-
     @classmethod
     def set_obj(cls, url, flag):
         obj = cls(url=url)
-        obj.data_to_db[flag] = True
+        obj.data[flag] = True
         return obj
 
     @staticmethod
-    def uploaded_image(url, name) -> UploadedFile or None:
+    def uploaded_image(url, name):
         try:
             os.chdir(PATH_TEMP)
         except FileNotFoundError:
@@ -152,11 +147,11 @@ class Parser(object, metaclass=ParserMeta):
         except () as e:
             raise ValueError(e)
         else:
-            query = model.objects.filter(title__iexact=self.data_to_db['title'])
+            query = model.objects.filter(title__iexact=self.data['title'])
         if query.exists():
             return None
         else:
-            return model.objects.create(**self.data_to_db)
+            return model.objects.create(**self.data)
 
     @staticmethod
     def is_not_word_in_field(list_1, str_1):
@@ -168,8 +163,8 @@ class Parser(object, metaclass=ParserMeta):
     def get_element_method(self, attr_model):
         return self.__class__.__dict__[attr_model].element_method
 
-    def _get_pars_fiaeld(self):
-        field = self.__class__.Meta.field_coincidence
+    def _get_pars_field(self):
+        field = self._opt.meta.field_coincidence
         pars_field = 'self.block.cssselect(self.__getattribute__(field))[0]{}'
         try:
             return eval(pars_field.format(self.get_element_method(field)))
@@ -180,38 +175,40 @@ class Parser(object, metaclass=ParserMeta):
 
         if hasattr(self.__class__, 'Meta') and hasattr(self.__class__.Meta, 'field_coincidence'):
             list_coincidence = getattr(self.__class__.Meta, 'coincidence')
-            pars_res_field = self._get_pars_fiaeld()
+            pars_res_field = self._get_pars_field()
             if self.is_not_word_in_field(list_coincidence, pars_res_field):
-                self.data_to_db = None
+                self.data = None
                 return
         command = 'self.block.cssselect(self.__getattribute__(attr_model))[0]{}'
-        for attr_model in self.attrib:
+        for attr_model in self._opt.cls_attr:
             if self.__class__.__dict__[attr_model].page_url:
-                self.data_to_db[attr_model] = self.url
+                self.data[attr_model] = self.url
                 continue
             try:
                 pars_res = eval(command.format(self.get_element_method(attr_model)))
             except IndexError:
-                if attr_model == self.image:
+                if attr_model == self._opt.image:
                     pars_res = None
                     continue
                 else:
                     self._get_except_val_err(attr_model)
-            if attr_model in self.list_domain:
-                pars_res = urljoin(self.base_domain, pars_res)
-            if attr_model == self.image and pars_res:
+            if attr_model in self._opt.list_domain:
+                pars_res = urljoin(self._opt.base_domain, pars_res)
+            if attr_model == self._opt.image and pars_res:
                 pars_res = self.uploaded_image(
                     pars_res,
                     '{}.jpg'.format(hashlib.sha1(pars_res.encode('utf-8')).hexdigest())
                 )
-            self.data_to_db[attr_model] = pars_res
+            self.data[attr_model] = pars_res
             yield pars_res
 
+    @staticmethod
+    def get_result(*args):
+        pass
+
     def run(self):
-        for res in self._gen_pars_res():
-            # print(res)
-            pass
-        if self.data_to_db is None:
+        self.get_result(*list(self._gen_pars_res()))
+        if self.data is None:
             return None
         return self.create()
 
