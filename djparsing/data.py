@@ -59,7 +59,7 @@ class AttrCssSelect(BaseCssSelect):
         return kwargs_attr if kwargs_attr else args[0]
 
 
-class ImgCSSSelect(AttrCssSelect):
+class ImgCssSelect(AttrCssSelect):
     img = True
 
     def __init__(self, *args, **kwargs):
