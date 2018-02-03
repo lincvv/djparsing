@@ -1,7 +1,8 @@
 djparsing 
 ===========
 ##### Django application for fast parsing and saving content to the database
-    parser of the first data block (by date this is new) and saving in the specified table
+parser of the first data block (by date this is new) and saving in the specified table
+
 Requirements
 -----------
 * python (3.4, 3.5, 3.6)
@@ -56,7 +57,14 @@ Note: a model for saving data can be specified in Meta class
 class Meta:
     model = MyModel # decorator @init is not needed
 ```
-    If you need to install an additional field in the database:
+Inheritance:
+```python
+class MyChildParserClass(MyParserClass):
+    my_field = data.TextCSSSelect()
+```
+Note: fields from the base class, and also the Meta class is inherited. You can override
+------    
+If you need to install an additional field in the database:
 ```python
 pars_obj.data['flag'] = True
 pars_obj.run()

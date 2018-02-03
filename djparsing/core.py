@@ -36,7 +36,7 @@ def init(**kwargs):
 
 
 class ParserMeta(type):
-
+    # meta class for classes parsing
     def __new__(cls, name, bases, attrs):
 
         parents = [base for base in bases if isinstance(base, ParserMeta)]
@@ -48,6 +48,7 @@ class ParserMeta(type):
             if isinstance(attr, (BaseCssSelect,)):
                 attr.attr_name = key
 
+        # we copy from the base classes fields and class Meta
         for base in reversed(parents):
             if not attrs.get('Meta', None):
                 if hasattr(base, 'Meta'):
@@ -86,6 +87,9 @@ class Parser(object, metaclass=ParserMeta):
                 self._opt.cls_attr .add(key)
         if not hasattr(self, 'block'):
             raise ValueError('In the {} the required "body" field'.format(self.__class__))
+
+    def __str__(self):
+        return self.__class__.__name__
 
     def _set_block_html(self, key, attr):
         try:
