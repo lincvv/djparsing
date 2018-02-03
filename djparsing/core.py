@@ -12,7 +12,6 @@ from PIL import Image
 from lxml.html import fromstring
 # from memory_profiler import profile
 from requests.exceptions import MissingSchema
-
 from .options import Options
 from .data import BaseCssSelect
 from .settings import PATH_TEMP
