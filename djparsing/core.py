@@ -207,7 +207,7 @@ class Parser(object, metaclass=ParserMeta):
 
     @staticmethod
     def get_result(*args):
-        pass
+        return args
 
     def run(self):
         self.get_result(*list(self._gen_pars_res()))
