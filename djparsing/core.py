@@ -201,7 +201,6 @@ class Parser(object, metaclass=ParserMeta):
                     pars_res = eval(command.format(self.get_element_method(attr_model)))
                 except IndexError:
                     if attr_model == self._opt.image:
-                        pars_res = None
                         continue
                     else:
                         self._get_except_val_err(attr_model, ind)
