@@ -101,7 +101,7 @@ class Parser(object, metaclass=ParserMeta):
         count = body_count if body_count else 30
         try:
             if start_url:
-                for url in self._get_html().cssselect(attr.start_url)[0:body_count]:
+                for url in self._get_html().cssselect(attr.start_url)[0:count]:
                     if self._opt.base_domain:
                         self._opt.page_url.append('{0}{1}'.format(self._opt.base_domain, url.get("href")))
                     else:
