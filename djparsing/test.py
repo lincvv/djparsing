@@ -98,10 +98,6 @@ class Timepars(ParsCustom):
     body = BodyCssSelect()
 
 
-# obj_quest.add_field['fffff'] = True
-# obj = obj_quest.run(log=False)
-obj_quest.run(log=True)
-
 # for data in obj:
 #     obj_time = Timepars(
 #         body="div#wrapper section.timetable-section > div.timetable > div.timetable_row",
@@ -109,5 +105,6 @@ obj_quest.run(log=True)
 #         url=data['source']
 #     )
 
-# print(obj_time.run(log=True))
 
+if __name__ == '__main__':
+    obj_quest.run(log=True)

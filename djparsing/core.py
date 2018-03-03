@@ -161,11 +161,11 @@ class Parser(object, metaclass=ParserMeta):
         except () as e:
             raise ValueError(e)
         else:
-            query = model.objects.filter(title__iexact=self.data['title'])
+            query = model.objects.filter(title__iexact=data['title'])
         if query.exists():
             return None
         else:
-            return model.objects.create(**self.data)
+            return model.objects.create(**data)
 
     @staticmethod
     def is_not_word_in_field(list_1, str_1):
