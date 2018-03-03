@@ -3,7 +3,8 @@ from djparsing import __author__, __version__
 
 setup(
     name='djparsing',
-    description='Convenient parser with saving data to the database',
+    description='microframework for parsing sites, '
+                'a simple interface and flexibility will help you quickly start parsing sites.',
     version=__version__,
     packages=['djparsing'],
     author=__author__,
