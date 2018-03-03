@@ -99,22 +99,25 @@ class Parser(object, metaclass=ParserMeta):
 
     def _set_block_html(self, key, attr, body_count, start_url=False):
         count = body_count if body_count else 30
+        print(self._get_html(), key)
+        print(self._get_html().cssselect(self.__getattribute__(key))[0], '--->>', key, attr)
         try:
             if start_url:
-                for url in self._get_html().cssselect(attr.start_url)[0:body_count]:
+                for url in self._get_html().cssselect(attr.start_url)[0:count]:
                     if self._opt.base_domain:
                         self._opt.page_url.append('{0}{1}'.format(self._opt.base_domain, url.get("href")))
                     else:
                         self._opt.page_url.append(url)
                 return list(self.get_block_list(self._opt.page_url, key))
+
             return self._get_html().cssselect(self.__getattribute__(key))[0:count]
         except IndexError:
             self._get_except_val_err(attr, ind=None)
         except MissingSchema:
-            self._get_except_val_err(attr, url=False, ind=None)
+            self._get_except_val_err(attr, url=True, ind=None)
 
-    def _get_except_val_err(self, attr, ind,  url=True):
-        if url:
+    def _get_except_val_err(self, attr, ind,  url=False):
+        if not url:
             raise ValueError('ind: {} - Check the initialization of the {} field in {}'.format(ind, attr, self.__class__))
         raise ValueError('Check attribute url in {}'.format(self))
 
@@ -205,7 +208,6 @@ class Parser(object, metaclass=ParserMeta):
                     pars_res = eval(command.format(self.get_element_method(attr_model)))
                 except IndexError:
                     if attr_model == self._opt.image:
-                        pars_res = None
                         continue
                     else:
                         self._get_except_val_err(attr_model, ind)
