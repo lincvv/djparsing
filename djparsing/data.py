@@ -4,9 +4,8 @@ class BaseCssSelect(object):
     """base class cssselect fields"""
     element_method = None
 
-    def __init__(self, add_domain=False, page_url=False, save_start_url=False, *args, **kwargs):
+    def __init__(self, add_domain=False, save_start_url=False, *args, **kwargs):
         self.add_domain = add_domain
-        self.page_url = page_url
         self.save_start_url = save_start_url
         self.attr_name = None
         self.attr_data = None

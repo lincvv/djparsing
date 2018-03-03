@@ -105,7 +105,7 @@ class Parser(object, metaclass=ParserMeta):
                     if self._opt.base_domain:
                         self._opt.page_url.append('{0}{1}'.format(self._opt.base_domain, url.get("href")))
                     else:
-                        self._opt.page_url.append(url)
+                        self._opt.page_url.append(url.get("href"))
                 return list(self.get_block_list(self._opt.page_url, key))
             return self._get_html().cssselect(self.__getattribute__(key))[0:count]
         except IndexError:
@@ -178,8 +178,8 @@ class Parser(object, metaclass=ParserMeta):
         return self.__class__.__dict__[attr_model].element_method
 
     def _gen_pars_res(self):
-        data = dict()
-        data.update(self.add_field)
+        data_result = dict()
+        data_result.update(self.add_field)
         for ind, block in enumerate(self.block_list):
             if hasattr(self.__class__, 'Meta') and hasattr(self.__class__.Meta, 'field_coincidence'):
                 list_coincidence = getattr(self.__class__.Meta, 'coincidence')
@@ -190,16 +190,12 @@ class Parser(object, metaclass=ParserMeta):
                 except IndexError:
                     self._get_except_val_err(field, ind=ind)
                 if self.is_not_word_in_field(list_coincidence, pars_res_field):
-                    data = None
                     continue
             command = 'block.cssselect(self.__getattribute__(attr_model))[0]{}'
             for attr_model in self._opt.cls_attr:
                 obj = self.__class__.__dict__[attr_model]
                 if obj.save_start_url and hasattr(obj, 'extra_data'):
-                    data[attr_model] = self._opt.page_url[ind]
-                    continue
-                if obj.page_url:
-                    data[attr_model] = self.url
+                    data_result[attr_model] = self._opt.page_url[ind]
                     continue
                 try:
                     pars_res = eval(command.format(self.get_element_method(attr_model)))
@@ -215,8 +211,8 @@ class Parser(object, metaclass=ParserMeta):
                         pars_res,
                         '{}.jpg'.format(hashlib.sha1(pars_res.encode('utf-8')).hexdigest())
                     )
-                data[attr_model] = pars_res
-            yield data
+                data_result[attr_model] = pars_res
+            yield data_result
 
     def log_output(self, result):
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
