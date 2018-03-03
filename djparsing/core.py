@@ -99,8 +99,6 @@ class Parser(object, metaclass=ParserMeta):
 
     def _set_block_html(self, key, attr, body_count, start_url=False):
         count = body_count if body_count else 30
-        print(self._get_html(), key)
-        print(self._get_html().cssselect(self.__getattribute__(key))[0], '--->>', key, attr)
         try:
             if start_url:
                 for url in self._get_html().cssselect(attr.start_url)[0:count]:
@@ -109,7 +107,6 @@ class Parser(object, metaclass=ParserMeta):
                     else:
                         self._opt.page_url.append(url)
                 return list(self.get_block_list(self._opt.page_url, key))
-
             return self._get_html().cssselect(self.__getattribute__(key))[0:count]
         except IndexError:
             self._get_except_val_err(attr, ind=None)
