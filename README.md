@@ -77,7 +77,7 @@ class MyParserClass(Parser):
     body = data.BodyCSSSelect()
     text = data.TextContentCSSSelect()
     
-    def log_output(self, result):
+    def log_output(self, result): # if you do not override the method, the result will be output to the terminal
         pass # and work further with the result
 ```
 Attributs
@@ -125,3 +125,4 @@ class MyParserClass(Parser):
 
 ```
 It works on this [site](http://pythoff.com/), all this on the [channel](https://telegram.me/python_all)
+-----

@@ -111,10 +111,10 @@ class Parser(object, metaclass=ParserMeta):
         except IndexError:
             self._get_except_val_err(attr, ind=None)
         except MissingSchema:
-            self._get_except_val_err(attr, url=False, ind=None)
+            self._get_except_val_err(attr, url=True, ind=None)
 
-    def _get_except_val_err(self, attr, ind,  url=True):
-        if url:
+    def _get_except_val_err(self, attr, ind,  url=False):
+        if not url:
             raise ValueError('ind: {} - Check the initialization of the {} field in {}'.format(ind, attr, self.__class__))
         raise ValueError('Check attribute url in {}'.format(self))
 
@@ -205,7 +205,6 @@ class Parser(object, metaclass=ParserMeta):
                     pars_res = eval(command.format(self.get_element_method(attr_model)))
                 except IndexError:
                     if attr_model == self._opt.image:
-                        pars_res = None
                         continue
                     else:
                         self._get_except_val_err(attr_model, ind)
