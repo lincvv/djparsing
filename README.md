@@ -98,15 +98,6 @@ Note: in the attribute with the URL should be href
 
 BodyCSSSelect(start_url='div.description.float-right > a', add_domain=True)
 ```
-##### page_url
-```python
-# if there is a field that needs to be assigned to the page URL
-# set page_url=True, by default False
-    
-source = AttrCSSSelect(page_url=True)
-# you can also use a special field for this purpose, which serves for the service data
-source = ExtraDataField(page_url=True)
-```
 
 ##### save_start_url
 when you need to save additional data in the field, 
