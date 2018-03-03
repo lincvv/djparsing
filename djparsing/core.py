@@ -1,6 +1,7 @@
 import copy
 import hashlib
 import os
+import logging
 # from abc import ABCMeta
 import shutil
 from io import BytesIO
@@ -65,12 +66,11 @@ class ParserMeta(type):
 
 
 class Parser(object, metaclass=ParserMeta):
-    __slots__ = ('url', 'data', 'block', 'page_url', '_opt')
+    __slots__ = ('url', 'add_field', 'block_list', 'page_url', '_opt')
 
     def __init__(self, url=None, **kwargs):
-        self.data = dict()
+        self.add_field = dict()
         self.url = url
-        # self.page_url = None
         for key, value in kwargs.items():
             setattr(self, key, value)
         for key, attr in self.__class__.__dict__.items():
@@ -79,39 +79,50 @@ class Parser(object, metaclass=ParserMeta):
                     self._opt.base_domain = self._opt.get_domain(self.url)
                     self._opt.list_domain.append(key)
                 if hasattr(attr, 'body'):
-                    self.block = self._set_block_html(key, attr)
+                    if attr.start_url:
+                        self.block_list = self._set_block_html(key, attr, attr.body_count, start_url=True)
+                    else:
+                        self.block_list = self._set_block_html(key, attr, attr.body_count)
                     continue
                 if hasattr(attr, 'img'):
                     self._opt.image = key
-                self._opt.cls_attr .add(key)
-        if not hasattr(self, 'block'):
+                self._opt.cls_attr.add(key)
+        if not hasattr(self, 'block_list'):
             raise ValueError('In the {} the required "body" field'.format(self.__class__))
 
     def __str__(self):
         return self.__class__.__name__
 
-    def _set_block_html(self, key, attr):
-        try:
-            if getattr(attr, 'start_url', False):
-                page_url = self.get_html.cssselect(attr.start_url)[0].get("href")
-                if self._opt.base_domain:
-                    self.url = '{0}{1}'.format(self._opt.base_domain, page_url)
-                else:
-                    self.url = page_url
-            return self.get_html.cssselect(self.__getattribute__(key))[0]
-        except IndexError:
-            self._get_except_val_err(attr)
-        except MissingSchema:
-            self._get_except_val_err(attr, url=False)
+    def get_block_list(self, urls, key):
+        for url in urls:
+            yield self._get_html(url=url).cssselect(self.__getattribute__(key))[0]
 
-    def _get_except_val_err(self, attr, url=True):
+    def _set_block_html(self, key, attr, body_count, start_url=False):
+        count = body_count if body_count else 30
+        try:
+            if start_url:
+                for url in self._get_html().cssselect(attr.start_url)[0:body_count]:
+                    if self._opt.base_domain:
+                        self._opt.page_url.append('{0}{1}'.format(self._opt.base_domain, url.get("href")))
+                    else:
+                        self._opt.page_url.append(url)
+                return list(self.get_block_list(self._opt.page_url, key))
+            return self._get_html().cssselect(self.__getattribute__(key))[0:count]
+        except IndexError:
+            self._get_except_val_err(attr, ind=None)
+        except MissingSchema:
+            self._get_except_val_err(attr, url=False, ind=None)
+
+    def _get_except_val_err(self, attr, ind,  url=True):
         if url:
-            raise ValueError('Check the initialization of the {} field in {}'.format(attr, self.__class__))
+            raise ValueError('ind: {} - Check the initialization of the {} field in {}'.format(ind, attr, self.__class__))
         raise ValueError('Check attribute url in {}'.format(self))
 
-    @property
-    def get_html(self) -> lxml.html.HtmlElement:
-        response = requests.get(self.url)
+    def _get_html(self, url=None) -> lxml.html.HtmlElement:
+        if url is None:
+            response = requests.get(self.url)
+        else:
+            response = requests.get(url)
         return fromstring(response.text)
 
     @classmethod
@@ -144,7 +155,7 @@ class Parser(object, metaclass=ParserMeta):
             os.remove(os.path.join(PATH_TEMP, name))
         return InMemoryUploadedFile(image_io, None, name, None, None, None)
 
-    def create(self):
+    def create(self, data):
         try:
             model = self.__class__.Meta.model
         except () as e:
@@ -166,52 +177,55 @@ class Parser(object, metaclass=ParserMeta):
     def get_element_method(self, attr_model):
         return self.__class__.__dict__[attr_model].element_method
 
-    def _get_pars_field(self):
-        field = self._opt.meta.field_coincidence
-        pars_field = 'self.block.cssselect(self.__getattribute__(field))[0]{}'
-        try:
-            return eval(pars_field.format(self.get_element_method(field)))
-        except IndexError:
-            self._get_except_val_err(field)
-
     def _gen_pars_res(self):
-
-        if hasattr(self.__class__, 'Meta') and hasattr(self.__class__.Meta, 'field_coincidence'):
-            list_coincidence = getattr(self.__class__.Meta, 'coincidence')
-            pars_res_field = self._get_pars_field()
-            if self.is_not_word_in_field(list_coincidence, pars_res_field):
-                self.data = None
-                return
-        command = 'self.block.cssselect(self.__getattribute__(attr_model))[0]{}'
-        for attr_model in self._opt.cls_attr:
-            if self.__class__.__dict__[attr_model].page_url:
-                self.data[attr_model] = self.url
-                continue
-            try:
-                pars_res = eval(command.format(self.get_element_method(attr_model)))
-            except IndexError:
-                if attr_model == self._opt.image:
-                    pars_res = None
+        data = dict()
+        data.update(self.add_field)
+        for ind, block in enumerate(self.block_list):
+            if hasattr(self.__class__, 'Meta') and hasattr(self.__class__.Meta, 'field_coincidence'):
+                list_coincidence = getattr(self.__class__.Meta, 'coincidence')
+                field = self._opt.meta.field_coincidence
+                pars_field_command = 'block.cssselect(self.__getattribute__(field))[0]{}'
+                try:
+                    pars_res_field = eval(pars_field_command.format(self.get_element_method(field)))
+                except IndexError:
+                    self._get_except_val_err(field, ind=ind)
+                if self.is_not_word_in_field(list_coincidence, pars_res_field):
+                    data = None
                     continue
-                else:
-                    self._get_except_val_err(attr_model)
-            if attr_model in self._opt.list_domain:
-                pars_res = urljoin(self._opt.base_domain, pars_res)
-            if attr_model == self._opt.image and pars_res:
-                pars_res = self.uploaded_image(
-                    pars_res,
-                    '{}.jpg'.format(hashlib.sha1(pars_res.encode('utf-8')).hexdigest())
-                )
-            self.data[attr_model] = pars_res
-            yield pars_res
+            command = 'block.cssselect(self.__getattribute__(attr_model))[0]{}'
+            for attr_model in self._opt.cls_attr:
+                obj = self.__class__.__dict__[attr_model]
+                if obj.save_start_url and hasattr(obj, 'extra_data'):
+                    data[attr_model] = self._opt.page_url[ind]
+                    continue
+                if obj.page_url:
+                    data[attr_model] = self.url
+                    continue
+                try:
+                    pars_res = eval(command.format(self.get_element_method(attr_model)))
+                except IndexError:
+                    if attr_model == self._opt.image:
+                        pars_res = None
+                        continue
+                    else:
+                        self._get_except_val_err(attr_model, ind)
+                if attr_model in self._opt.list_domain:
+                    pars_res = urljoin(self._opt.base_domain, pars_res)
+                if attr_model == self._opt.image and pars_res:
+                    pars_res = self.uploaded_image(
+                        pars_res,
+                        '{}.jpg'.format(hashlib.sha1(pars_res.encode('utf-8')).hexdigest())
+                    )
+                data[attr_model] = pars_res
+            yield data
 
-    @staticmethod
-    def get_result(*args):
-        return args
+    def log_output(self, result):
+        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+        logging.info('{} :\n {}'.format(self, result))
 
-    def run(self):
-        self.get_result(*list(self._gen_pars_res()))
-        if self.data is None:
-            return None
-        return self.create()
-
+    def run(self, log=False):
+        for ind, res in enumerate(self._gen_pars_res()):
+            if log:
+                self.log_output(res)
+            else:
+                self.create(res)

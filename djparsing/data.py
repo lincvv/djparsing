@@ -4,9 +4,10 @@ class BaseCssSelect(object):
     """base class cssselect fields"""
     element_method = None
 
-    def __init__(self, add_domain=False, page_url=False, *args, **kwargs):
+    def __init__(self, add_domain=False, page_url=False, save_start_url=False, *args, **kwargs):
         self.add_domain = add_domain
         self.page_url = page_url
+        self.save_start_url = save_start_url
         self.attr_name = None
         self.attr_data = None
 
@@ -23,6 +24,10 @@ class BaseCssSelect(object):
         return value
 
 
+class ExtraDataField(BaseCssSelect):
+    extra_data = True
+
+
 class TextCssSelect(BaseCssSelect):
     element_method = '.text'
 
@@ -34,9 +39,10 @@ class TextContentCssSelect(BaseCssSelect):
 class BodyCssSelect(BaseCssSelect):
     body = True
 
-    def __init__(self, start_url=None, *args, **kwargs):
+    def __init__(self, start_url=None, body_count=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.start_url = start_url
+        self.body_count = body_count
 
 
 class AttrCssSelect(BaseCssSelect):
