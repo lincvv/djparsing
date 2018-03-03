@@ -52,7 +52,7 @@ pars_obj = MyParserClass(
 pars_obj.run()
 ```
 Note: a model for saving data can be specified in Meta class
-------
+
 ```python
 class Meta:
     model = MyModel # decorator @init is not needed
@@ -63,7 +63,7 @@ class MyChildParserClass(MyParserClass):
     my_field = data.TextCSSSelect()
 ```
 Note: fields from the base class, and also the Meta class is inherited. You can override
-------    
+    
 If you need to install an additional field in the database:
 ```python
 pars_obj.add_field['flag'] = True
@@ -90,20 +90,22 @@ Attributs
 BodyCSSSelect(start_url='div.description.float-right > a')
 ```
 Note: in the attribute with the URL should be href
--------
+
 ##### add_domain
 ```python
-#if the URL in the attribute does not have a domain
-#set add_domain=True, by default False
+# if the URL in the attribute does not have a domain
+# set add_domain=True, by default False
 
 BodyCSSSelect(start_url='div.description.float-right > a', add_domain=True)
 ```
 ##### page_url
 ```python
-#if there is a field that needs to be assigned to the page URL
-#set page_url=True, by default False
+# if there is a field that needs to be assigned to the page URL
+# set page_url=True, by default False
     
 source = AttrCSSSelect(page_url=True)
+# you can also use a special field for this purpose, which serves for the service data
+source = ExtraDataField(page_url=True)
 ```
 
 ##### save_start_url
@@ -122,6 +124,4 @@ class MyParserClass(Parser):
     source = ExtraDataField(save_start_url=True)
 
 ```
-Note: if an attribute is set, when the object is initialized, no value is required for this field
--------
 It works on this [site](http://pythoff.com/), all this on the [channel](https://telegram.me/python_all)
