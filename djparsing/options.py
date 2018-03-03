@@ -8,6 +8,7 @@ class Options(object):
         self.cls_attr = set()
         self.image = None
         self.base_domain = None
+        self.page_url = list()
 
     @staticmethod
     def get_domain(url):

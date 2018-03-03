@@ -66,16 +66,27 @@ Note: fields from the base class, and also the Meta class is inherited. You can 
 ------    
 If you need to install an additional field in the database:
 ```python
-pars_obj.data['flag'] = True
-pars_obj.run()
+pars_obj.add_field['flag'] = True
+pars_obj.run()  #if you do not need to save to the database and print the data to the log, 
+                # add the argument log -> run(log=True) and redefine the method log_output(self, result):
+```
+    Example:
+```python
+@init(model='MyModel', app='my_app')
+class MyParserClass(Parser):
+    body = data.BodyCSSSelect()
+    text = data.TextContentCSSSelect()
+    
+    def log_output(self, result):
+        pass # and work further with the result
 ```
 Attributs
 =========
 ##### start_url
 
 ```python
-#initialize the path to the URL with the data block.
- 
+# initialize the path to the URL with the data block.
+# This is needed when the list of objects is on the page, and the data is on another page 
 BodyCSSSelect(start_url='div.description.float-right > a')
 ```
 Note: in the attribute with the URL should be href
@@ -93,6 +104,23 @@ BodyCSSSelect(start_url='div.description.float-right > a', add_domain=True)
 #set page_url=True, by default False
     
 source = AttrCSSSelect(page_url=True)
+```
+
+##### save_start_url
+when you need to save additional data in the field, 
+such as the start URLs of objects, add the ExtraDataField field (save_start_url = True)
+
+##### body_count
+how many objects are parsing
+
+    Example:
+```python
+class MyParserClass(Parser):
+    start = BodyCssSelect(start_url='ul.quest-tiles > li.quest-tile-1 > div.item-box > div.item-box-desc h4  a',
+                          add_domain=True,
+                          body_count=4)
+    source = ExtraDataField(save_start_url=True)
+
 ```
 Note: if an attribute is set, when the object is initialized, no value is required for this field
 -------
