@@ -150,12 +150,6 @@ class Parser(object, metaclass=ParserMeta):
             response = requests.get(url).text
         return fromstring(response)
 
-    # def except_val_err(self, attr, url=False, ind=None):
-    #     if not url:
-    #         raise ValueError(
-    #             'ind: {} - Check the initialization of the {} field in {}'.format(ind, attr, self.__class__))
-    #     raise ValueError('Check attribute url in {}'.format(self))
-
     @classmethod
     def set_obj(cls, url, flag):
         obj = cls(url=url)
@@ -197,6 +191,7 @@ class Parser(object, metaclass=ParserMeta):
             return None
         else:
             self.data_db = model.objects.create(**data)
+            return self.data_db
 
     def is_field_coincidence(self):
         if hasattr(self.__class__, 'Meta') and hasattr(self.__class__.Meta, 'field_coincidence'):
