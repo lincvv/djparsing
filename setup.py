@@ -1,5 +1,17 @@
+import os
 from setuptools import setup
 from djparsing import __author__, __version__
+
+
+def __read_requires(file):
+    try:
+        with open(os.path.join(os.path.dirname(__file__), file)).read() as requires:
+            return requires
+    except IOError:
+        return ''
+
+
+install_requires = __read_requires('requirements.txt').split()
 
 setup(
     name='djparsing',
@@ -10,6 +22,7 @@ setup(
     author=__author__,
     author_email='vlinchevskyi@gmail.com',
     license='BSD License',
+    install_requires=install_requires,
     url='https://github.com/lincvv/djparsing',
     classifiers=[
         'Environment :: Web Environment',

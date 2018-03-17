@@ -1,18 +1,19 @@
 import copy
-import hashlib
+# import hashlib
 import os
 import logging
 # from abc import ABCMeta
 import shutil
 from io import BytesIO
 from urllib.error import URLError
-from urllib.parse import urlsplit, urljoin
 import lxml
 import requests
 from PIL import Image
 from lxml.html import fromstring
 # from memory_profiler import profile
 from requests.exceptions import MissingSchema
+from .exceptions import URLException, FieldException
+from .parser import ResultParser
 from .options import Options
 from .data import BaseCssSelect
 from .settings import PATH_TEMP
@@ -22,7 +23,6 @@ from django.apps import apps
 
 
 def init(**kwargs):
-
     def dec(cls):
         if hasattr(cls, 'Meta'):
             meta = cls.Meta
@@ -66,11 +66,12 @@ class ParserMeta(type):
 
 
 class Parser(object, metaclass=ParserMeta):
-    __slots__ = ('url', 'add_field', 'block_list', 'page_url', '_opt')
+    __slots__ = ('url', 'add_field', 'block_list', 'page_url', '_opt', 'cls_attr')
 
     def __init__(self, url=None, **kwargs):
-        self.add_field = dict()
         self.url = url
+        self.cls_attr = set()
+        self.add_field = dict()
         for key, value in kwargs.items():
             setattr(self, key, value)
         for key, attr in self.__class__.__dict__.items():
@@ -80,55 +81,84 @@ class Parser(object, metaclass=ParserMeta):
                     self._opt.list_domain.append(key)
                 if hasattr(attr, 'body'):
                     if attr.start_url:
-                        self.block_list = self._set_block_html(key, attr, attr.body_count, start_url=True)
+                        self.block_list = self._get_block_html(key, attr, attr.body_count, start_url=True, **kwargs)
                     else:
-                        self.block_list = self._set_block_html(key, attr, attr.body_count)
+                        self.block_list = self._get_block_html(key, attr, attr.body_count, **kwargs)
                     continue
                 if hasattr(attr, 'img'):
                     self._opt.image = key
-                self._opt.cls_attr.add(key)
+                self.cls_attr.add(key)
         if not hasattr(self, 'block_list'):
-            raise ValueError('In the {} the required "body" field'.format(self.__class__))
+            raise FieldException(detail='The required field', field='BodyCssSelect', obj=self.__class__)
 
     def __str__(self):
         return self.__class__.__name__
 
-    def get_block_list(self, urls, key):
-        for url in urls:
-            yield self._get_html(url=url).cssselect(self.__getattribute__(key))[0]
+    def get_page_url(self, ind):
+        return self._opt.page_url[ind]
 
-    def _set_block_html(self, key, attr, body_count, start_url=False):
+    def get_field_image(self):
+        return self._opt.image
+
+    def get_fields_add_domain(self):
+        return self._opt.list_domain
+
+    def get_base_domain(self):
+        return self._opt.base_domain
+
+    def get_field_coincidence(self):
+        return self._opt.meta.field_coincidence
+
+    def get_element_method(self, attr_model):
+        return self.__class__.__dict__[attr_model].element_method
+
+    def get_list_coincidence(self):
+        return getattr(self.__class__.Meta, 'coincidence')
+
+    def _gen_block_html(self, urls, key, **kwargs):
+        for url in urls:
+            yield self._get_html(url=url, **kwargs).cssselect(self.__getattribute__(key))[0]
+
+    def _get_block_html(self, key, attr, body_count, start_url=False, **kwargs):
         count = body_count if body_count else 30
         try:
             if start_url:
-                for url in self._get_html().cssselect(attr.start_url)[0:count]:
+                for elem_url in self._get_html(**kwargs).cssselect(attr.start_url)[0:count]:
+
                     if self._opt.base_domain:
-                        self._opt.page_url.append('{0}{1}'.format(self._opt.base_domain, url.get("href")))
+                        self._opt.page_url.append('{0}{1}'.format(self._opt.base_domain, elem_url.get("href")))
                     else:
-                        self._opt.page_url.append(url.get("href"))
-                return list(self.get_block_list(self._opt.page_url, key))
-            return self._get_html().cssselect(self.__getattribute__(key))[0:count]
+                        self._opt.page_url.append(elem_url.get("href"))
+                return list(self._gen_block_html(self._opt.page_url, key, **kwargs))
+            return self._get_html(**kwargs).cssselect(self.__getattribute__(key))[0:count]
         except IndexError:
-            self._get_except_val_err(attr, ind=None)
+            raise FieldException(field=key, obj=self)
         except MissingSchema:
-            self._get_except_val_err(attr, url=True, ind=None)
+            raise URLException(obj=self)
 
-    def _get_except_val_err(self, attr, ind,  url=False):
-        if not url:
-            raise ValueError('ind: {} - Check the initialization of the {} field in {}'.format(ind, attr, self.__class__))
-        raise ValueError('Check attribute url in {}'.format(self))
-
-    def _get_html(self, url=None) -> lxml.html.HtmlElement:
+    def _get_html(self, url=None, web_driver=False, **kwargs) -> lxml.html.HtmlElement:
         if url is None:
-            response = requests.get(self.url)
+            url = self.url
+        if web_driver:
+            from selenium import webdriver
+            driver = webdriver.Firefox()
+            driver.get(url)
+            response = driver.page_source
+            driver.close()
         else:
-            response = requests.get(url)
-        return fromstring(response.text)
+            response = requests.get(url).text
+        return fromstring(response)
+
+    # def except_val_err(self, attr, url=False, ind=None):
+    #     if not url:
+    #         raise ValueError(
+    #             'ind: {} - Check the initialization of the {} field in {}'.format(ind, attr, self.__class__))
+    #     raise ValueError('Check attribute url in {}'.format(self))
 
     @classmethod
     def set_obj(cls, url, flag):
         obj = cls(url=url)
-        obj.data[flag] = True
+        obj.add_field[flag] = True
         return obj
 
     @staticmethod
@@ -167,60 +197,22 @@ class Parser(object, metaclass=ParserMeta):
         else:
             return model.objects.create(**data)
 
-    @staticmethod
-    def is_not_word_in_field(list_1, str_1):
-        for word in list_1:
-            if word.lower() in str_1.lower():
-                return False
-        return True
-
-    def get_element_method(self, attr_model):
-        return self.__class__.__dict__[attr_model].element_method
-
-    def _gen_pars_res(self):
-        data_result = dict()
-        data_result.update(self.add_field)
-        for ind, block in enumerate(self.block_list):
-            if hasattr(self.__class__, 'Meta') and hasattr(self.__class__.Meta, 'field_coincidence'):
-                list_coincidence = getattr(self.__class__.Meta, 'coincidence')
-                field = self._opt.meta.field_coincidence
-                pars_field_command = 'block.cssselect(self.__getattribute__(field))[0]{}'
-                try:
-                    pars_res_field = eval(pars_field_command.format(self.get_element_method(field)))
-                except IndexError:
-                    self._get_except_val_err(field, ind=ind)
-                if self.is_not_word_in_field(list_coincidence, pars_res_field):
-                    continue
-            command = 'block.cssselect(self.__getattribute__(attr_model))[0]{}'
-            for attr_model in self._opt.cls_attr:
-                obj = self.__class__.__dict__[attr_model]
-                if obj.save_start_url and hasattr(obj, 'extra_data'):
-                    data_result[attr_model] = self._opt.page_url[ind]
-                    continue
-                try:
-                    pars_res = eval(command.format(self.get_element_method(attr_model)))
-                except IndexError:
-                    if attr_model == self._opt.image:
-                        continue
-                    else:
-                        self._get_except_val_err(attr_model, ind)
-                if attr_model in self._opt.list_domain:
-                    pars_res = urljoin(self._opt.base_domain, pars_res)
-                if attr_model == self._opt.image and pars_res:
-                    pars_res = self.uploaded_image(
-                        pars_res,
-                        '{}.jpg'.format(hashlib.sha1(pars_res.encode('utf-8')).hexdigest())
-                    )
-                data_result[attr_model] = pars_res
-            yield data_result
+    def is_field_coincidence(self):
+        if hasattr(self.__class__, 'Meta') and hasattr(self.__class__.Meta, 'field_coincidence'):
+            return True
+        return False
 
     def log_output(self, result):
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
         logging.info('{} :\n {}'.format(self, result))
 
-    def run(self, log=False):
-        for ind, res in enumerate(self._gen_pars_res()):
+    def run(self, log=False, create=True):
+        parser = ResultParser(self, self.add_field)
+        if not create and not log:
+            return parser
+        for ind, res in enumerate(parser):
             if log:
                 self.log_output(res)
-            else:
+            elif create:
                 self.create(res)
+
