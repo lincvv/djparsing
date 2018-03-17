@@ -66,10 +66,11 @@ class ParserMeta(type):
 
 
 class Parser(object, metaclass=ParserMeta):
-    __slots__ = ('url', 'add_field', 'block_list', 'page_url', '_opt', 'cls_attr')
+    __slots__ = ('url', 'add_field', 'block_list', 'page_url', '_opt', 'cls_attr', 'data_db')
 
     def __init__(self, url=None, **kwargs):
         self.url = url
+        self.data_db = None
         self.cls_attr = set()
         self.add_field = dict()
         for key, value in kwargs.items():
@@ -195,7 +196,7 @@ class Parser(object, metaclass=ParserMeta):
         if query.exists():
             return None
         else:
-            return model.objects.create(**data)
+            self.data_db = model.objects.create(**data)
 
     def is_field_coincidence(self):
         if hasattr(self.__class__, 'Meta') and hasattr(self.__class__.Meta, 'field_coincidence'):

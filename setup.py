@@ -5,13 +5,12 @@ from djparsing import __author__, __version__
 
 def __read_requires(file):
     try:
-        with open(os.path.join(os.path.dirname(__file__), file)).read() as requires:
-            return requires
+        return open(os.path.join(os.path.dirname(__file__), file)).read()
     except IOError:
         return ''
 
 
-install_requires = __read_requires('requirements.txt').split()
+install_requires = __read_requires("requirements.txt").split()
 
 setup(
     name='djparsing',
