@@ -5,9 +5,8 @@ from .exceptions import FieldException
 
 
 class ResultParser(object):
-    def __init__(self, obj_parser, add_field):
+    def __init__(self, obj_parser):
         self.obj_parser = obj_parser
-        self.data_result = add_field
 
     def __repr__(self):
         return 'ResultParser({})'.format(self.obj_parser)
@@ -43,6 +42,7 @@ class ResultParser(object):
 
     def __iter__(self):
         for ind, block in enumerate(self.obj_parser.block_list):
+            yield ind
             if self.obj_parser.is_field_coincidence():
                 field_result = self.get_field(block)
                 if not self.is_word_in_field(field=field_result):
@@ -51,12 +51,12 @@ class ResultParser(object):
                 obj = self.get_object_field(attr_name)
                 if obj.save_start_url and hasattr(obj, 'extra_data'):
                     try:
-                        self.data_result[attr_name] = self.obj_parser.get_page_url(ind=ind)
+                        yield {attr_name: self.obj_parser.get_page_url(ind=ind)}
                     except IndexError:
                         raise ValueError('Check the field with the attribute "start_url"')
                     continue
                 if obj.save_url:
-                    self.data_result[attr_name] = self.obj_parser.url
+                    yield {attr_name: self.obj_parser.url}
                     continue
                 if obj.many:
                     data_input = list()
@@ -65,7 +65,7 @@ class ResultParser(object):
                             data_input.append(data.get(obj.attr_data))
                         if obj.text:
                             data_input.append(data.text)
-                    self.data_result[attr_name] = data_input
+                    yield {attr_name: data_input}
                     continue
                 try:
                     pars_result = self.get_elem_result(block=block, obj_field=obj)
@@ -81,6 +81,5 @@ class ResultParser(object):
                         pars_result,
                         '{}.jpg'.format(hashlib.sha1(pars_result.encode('utf-8')).hexdigest())
                     )
-                self.data_result[attr_name] = pars_result
-            yield self.data_result
+                yield {attr_name: pars_result}
 

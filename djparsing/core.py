@@ -202,13 +202,27 @@ class Parser(object, metaclass=ParserMeta):
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
         logging.info('{} :\n {}'.format(self, result))
 
+    @staticmethod
+    def __get_result(it):
+        pars_result = dict()
+        key_ind = int()
+        for res in it:
+            if isinstance(res, int):
+                pars_result[res] = dict()
+                key_ind = res
+            else:
+                pars_result[key_ind].update(res)
+        return pars_result
+
     def run(self, log=False, create=True):
-        parser = ResultParser(self, self.add_field)
+        parser = ResultParser(self)
+        pars_result = self.__get_result(parser)
         if not create and not log:
-            return parser
-        for ind, res in enumerate(parser):
+            return pars_result
+        for _, out_data in pars_result.items():
             if log:
-                self.log_output(res)
-            elif create:
-                self.create(res)
+                self.log_output(out_data)
+            elif create and out_data:
+                out_data.update(self.add_field)
+                self.create(out_data)
 

@@ -74,7 +74,7 @@ class ItProgerPars(Parser):
     source = ExtraDataField(save_start_url=True)
     body = BodyCssSelect(
         start_url='article > div.entry-image a',
-        body_count=5)
+        body_count=3)
     img = ImgCssSelect('data-lazy-src')
     text = TextContentCssSelect()
     title = TextCssSelect()
