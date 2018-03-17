@@ -3,10 +3,16 @@
 class BaseCssSelect(object):
     """base class cssselect fields"""
     element_method = None
+    extra_data = False
+    attr = False
+    text = False
+    text_content = False
 
-    def __init__(self, add_domain=False, save_start_url=False, *args, **kwargs):
+    def __init__(self, add_domain=False, save_start_url=False, save_url=False, many=False, *args, **kwargs):
         self.add_domain = add_domain
         self.save_start_url = save_start_url
+        self.save_url = save_url
+        self.many = many
         self.attr_name = None
         self.attr_data = None
 
@@ -29,10 +35,12 @@ class ExtraDataField(BaseCssSelect):
 
 class TextCssSelect(BaseCssSelect):
     element_method = '.text'
+    text =True
 
 
 class TextContentCssSelect(BaseCssSelect):
     element_method = '.text_content()'
+    text_content = True
 
 
 class BodyCssSelect(BaseCssSelect):
@@ -45,13 +53,14 @@ class BodyCssSelect(BaseCssSelect):
 
 
 class AttrCssSelect(BaseCssSelect):
+    attr = True
     NAME_ATTRIBUTE = 'attr_data'
     element_method = '.get("{}")'
 
     def __init__(self, attr_data=None, *args, **kwargs):
         attr_data = self._check_attr_data_is_required(attr_data=attr_data, *args, **kwargs)
         super().__init__(*args, **kwargs)
-        # self.attr_data = attr_data
+        self.attr_data = attr_data
         self.element_method = self.element_method.format(attr_data)
 
     def _check_attr_data_is_required(self, *args, **kwargs):

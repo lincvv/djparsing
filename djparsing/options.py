@@ -5,10 +5,10 @@ class Options(object):
     def __init__(self, meta):
         self.meta = meta
         self.list_domain = list()
-        self.cls_attr = set()
         self.image = None
         self.base_domain = None
         self.page_url = list()
+        self.data_result = dict()
 
     @staticmethod
     def get_domain(url):
