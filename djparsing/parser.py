@@ -77,6 +77,7 @@ class ResultParser(object):
                 if attr_name in self.obj_parser.get_fields_add_domain():
                     pars_result = urljoin(self.obj_parser.get_base_domain(), pars_result)
                 if attr_name == self.obj_parser.get_field_image() and pars_result:
+                    # check the field ImgCssSelect and the result
                     pars_result = self.obj_parser.uploaded_image(
                         pars_result,
                         '{}.jpg'.format(hashlib.sha1(pars_result.encode('utf-8')).hexdigest())

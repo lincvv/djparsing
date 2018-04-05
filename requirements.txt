@@ -1,5 +1,4 @@
 cssselect>=1.0.1
-django>=1.9.8,<=2.0.2
 lxml>=4.1.1
 pillow>=5.0.0
 requests>=2.18.4

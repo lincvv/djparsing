@@ -17,12 +17,11 @@ from .parser import ResultParser
 from .options import Options
 from .data import BaseCssSelect
 from .settings import PATH_TEMP
-from django.core.files.uploadedfile import InMemoryUploadedFile
-# from django.core.files.uploadedfile import TemporaryUploadedFile
-from django.apps import apps
 
 
 def init(**kwargs):
+    from django.apps import apps
+
     def dec(cls):
         if hasattr(cls, 'Meta'):
             meta = cls.Meta
@@ -159,6 +158,10 @@ class Parser(object, metaclass=ParserMeta):
     @staticmethod
     def uploaded_image(url, name):
         try:
+            from django.core.files.uploadedfile import InMemoryUploadedFile
+        except ImportError:
+            return url
+        try:
             os.chdir(PATH_TEMP)
         except FileNotFoundError:
             os.makedirs(PATH_TEMP)
@@ -178,6 +181,7 @@ class Parser(object, metaclass=ParserMeta):
             image.save(image_io, "png", optimize=True)
             image_io.seek(0)
             os.remove(os.path.join(PATH_TEMP, name))
+
         return InMemoryUploadedFile(image_io, None, name, None, None, None)
 
     def create(self, data):

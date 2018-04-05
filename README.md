@@ -1,6 +1,6 @@
 djparsing 
 ===========
-##### Django application for fast parsing and saving content to the database
+##### Convenient parsing, can be used as an application Django or independently
 parser of the first data block (by date this is new) and saving in the specified table
 
 Requirements

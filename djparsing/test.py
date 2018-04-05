@@ -24,7 +24,8 @@ data_habr_blog = {
 }
 
 
-LIST_WORDS = ['Python', 'Django', 'Питон', 'Flask', 'PyDev', 'sanic', 'aiohttp', '2018', 'vue', 'computer']
+LIST_WORDS = ['Python', 'Django', 'Питон', 'Flask', 'PyDev', 'sanic', 'aiohttp', '2018', 'vue', 'computer', '404',
+              'tproger']
 
 
 class HabrAll(HabrBlog):
@@ -89,14 +90,14 @@ obj_itproger = ItProgerPars(
     text="div.entry-container > div.entry-content > p",
     source=".post-title .title-box .entry-title a",
     title=".post-title > h1.entry-title",
-    img="div.entry-image > a > img",
+    img="div.entry-image > img",
     url='https://tproger.ru'
 )
 
 
 if __name__ == '__main__':
     obj_itproger.run(log=True)
-    obj_pthonz.run(log=True)
+    # obj_pthonz.run(log=True)
     print(strftime('[%H: %M: %S]'), end=' ')
     print('********************END*********************')
 
