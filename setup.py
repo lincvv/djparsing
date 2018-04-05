@@ -15,7 +15,8 @@ install_requires = __read_requires("requirements.txt").split()
 setup(
     name='djparsing',
     description='microframework for parsing sites, '
-                'a simple interface and flexibility will help you quickly start parsing sites.',
+                'a simple interface and flexibility will help you quickly start parsing sites.'
+                'Convenient parsing, can be used as an application Django or independently',
     version=__version__,
     packages=['djparsing'],
     author=__author__,
@@ -25,7 +26,7 @@ setup(
     url='https://github.com/lincvv/djparsing',
     classifiers=[
         'Environment :: Web Environment',
-        'Framework :: Django or Independent use',
+        'Framework :: Django',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
