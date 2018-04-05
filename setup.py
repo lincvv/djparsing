@@ -25,7 +25,7 @@ setup(
     url='https://github.com/lincvv/djparsing',
     classifiers=[
         'Environment :: Web Environment',
-        'Framework :: Django or Independent use'
+        'Framework :: Django or Independent use',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
