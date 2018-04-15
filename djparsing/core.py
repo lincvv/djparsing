@@ -107,13 +107,16 @@ class Parser(object, metaclass=ParserMeta):
         return self._opt.base_domain
 
     def get_field_coincidence(self):
-        return self._opt.meta.field_coincidence
+        return getattr(self.get_meta(), 'field_coincidence', None)
 
     def get_element_method(self, attr_model):
         return self.__class__.__dict__[attr_model].element_method
 
     def get_list_coincidence(self):
-        return getattr(self.__class__.Meta, 'coincidence')
+        return getattr(self.get_meta(), 'coincidence', None)
+
+    def get_meta(self):
+        return self._opt.meta
 
     def _gen_block_html(self, urls, key, **kwargs):
         for url in urls:
@@ -155,8 +158,7 @@ class Parser(object, metaclass=ParserMeta):
         obj.add_field[flag] = True
         return obj
 
-    @staticmethod
-    def uploaded_image(url, name):
+    def uploaded_image(self, url, name):
         try:
             from django.core.files.uploadedfile import InMemoryUploadedFile
         except ImportError:
@@ -169,24 +171,29 @@ class Parser(object, metaclass=ParserMeta):
         finally:
             try:
                 resp_img = requests.get(url, stream=True)
-                if resp_img.status_code == 200:
-                    with open(name, 'wb') as img:
-                        resp_img.raw.decode_content = True
-                        shutil.copyfileobj(resp_img.raw, img)
-                # urlretrieve(url, name)
             except URLError:
                 return None
-            image = Image.open(name)
-            image_io = BytesIO()
-            image.save(image_io, "png", optimize=True)
-            image_io.seek(0)
-            os.remove(os.path.join(PATH_TEMP, name))
+            if resp_img.status_code == 200:
+                with open(name, 'wb') as img:
+                    resp_img.raw.decode_content = True
+                    shutil.copyfileobj(resp_img.raw, img)
+                image = Image.open(name)
+                image_io = BytesIO()
+                image.save(image_io, "png", optimize=True)
+                image_io.seek(0)
+                # urlretrieve(url, name)
+            else:
+                return None
+            try:
+                os.remove(os.path.join(PATH_TEMP, name))
+            except FileNotFoundError:
+                pass
 
         return InMemoryUploadedFile(image_io, None, name, None, None, None)
 
     def create(self, data):
         try:
-            model = self.__class__.Meta.model
+            model = self.get_meta().model
         except () as e:
             raise ValueError(e)
         else:
@@ -198,7 +205,7 @@ class Parser(object, metaclass=ParserMeta):
             return self.data_db
 
     def is_field_coincidence(self):
-        if hasattr(self.__class__, 'Meta') and hasattr(self.__class__.Meta, 'field_coincidence'):
+        if self.get_meta() and self.get_field_coincidence():
             return True
         return False
 

@@ -15,6 +15,8 @@ class ResultParser(object):
         return self.obj_parser.__class__.__dict__[field_name]
 
     def get_elem_result(self, block, obj_field):
+        # returns the result of an element
+        # obj_field this value is an object of type BaseCssSelect
         elem = block.cssselect(self.obj_parser.__getattribute__(obj_field.attr_name))[0]
         if obj_field.text:
             return elem.text
@@ -35,6 +37,9 @@ class ResultParser(object):
 
     def is_word_in_field(self, field):
         list_coincidence = self.obj_parser.get_list_coincidence()
+        if not list_coincidence:
+            detail = 'Check attribute'
+            raise FieldException(detail=detail, field='coincidence', obj=self.obj_parser.get_meta())
         for word in list_coincidence:
             if word.lower() in field.lower():
                 return True

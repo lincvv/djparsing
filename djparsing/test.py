@@ -15,7 +15,7 @@ class HabrBlog(Parser):
     img = ImgCssSelect('src')
 
 
-data_habr_blog = {
+data_habr= {
     'b': 'div.posts_list > ul.content-list > li.content-list__item > article.post_preview',
     'text': 'div.post__body_crop > div.post__text',
     'source': 'h2.post__title > a',
@@ -23,6 +23,11 @@ data_habr_blog = {
     'img': '.post__body_crop > .post__text img',
 }
 
+
+obj_habr_blog = HabrBlog(
+    url='https://habrahabr.ru/hub/django/',
+    **data_habr
+)
 
 LIST_WORDS = ['Python', 'Django', 'Питон', 'Flask', 'PyDev', 'sanic', 'aiohttp', '2018', 'vue', 'computer', '404',
               'tproger']
@@ -37,7 +42,7 @@ class HabrAll(HabrBlog):
 
 obj_habr_all = HabrAll(
     url='https://habrahabr.ru',
-    **data_habr_blog
+    **data_habr
 )
 
 
@@ -75,7 +80,7 @@ class ItProgerPars(Parser):
     source = ExtraDataField(save_start_url=True)
     body = BodyCssSelect(
         start_url='article > div.entry-image a',
-        body_count=3)
+        body_count=7)
     img = ImgCssSelect('data-lazy-src')
     text = TextContentCssSelect()
     title = TextCssSelect()
@@ -97,7 +102,9 @@ obj_itproger = ItProgerPars(
 
 if __name__ == '__main__':
     obj_itproger.run(log=True)
-    # obj_pthonz.run(log=True)
+    obj_pthonz.run(log=True)
+    obj_habr_all.run(log=True)
+    obj_habr_blog.run(log=True)
     print(strftime('[%H: %M: %S]'), end=' ')
     print('********************END*********************')
 

@@ -24,6 +24,7 @@ class MyModel(models.Model):
     create_date = models.DateTimeField(auto_now_add=True)
     img = models.ImageField(blank=True, null=True)
     flag = models.BooleanField(default=False)
+    
 ```
 ```python
 from djparsing.core import Parser, init
@@ -50,6 +51,7 @@ pars_obj = MyParserClass(
         url='http://site/'
         )
 pars_obj.run()
+
 ```
 Note: a model for saving data can be specified in Meta class
 

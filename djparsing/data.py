@@ -1,5 +1,4 @@
 
-
 class BaseCssSelect(object):
     """base class cssselect fields"""
     element_method = None
@@ -13,6 +12,8 @@ class BaseCssSelect(object):
         self.save_start_url = save_start_url
         self.save_url = save_url
         self.many = many
+        self.start_url = None
+        self.body_count = None
         self.attr_name = None
         self.attr_data = None
 
@@ -35,7 +36,7 @@ class ExtraDataField(BaseCssSelect):
 
 class TextCssSelect(BaseCssSelect):
     element_method = '.text'
-    text =True
+    text = True
 
 
 class TextContentCssSelect(BaseCssSelect):
@@ -88,6 +89,3 @@ class ImgCssSelect(AttrCssSelect):
         except AttributeError:
             kwargs.update({self.NAME_ATTRIBUTE: 'src'})
             return kwargs
-
-
-
