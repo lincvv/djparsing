@@ -116,7 +116,7 @@ class Parser(object, metaclass=ParserMeta):
         return getattr(self.get_meta(), 'coincidence', None)
 
     def get_meta(self):
-        return self._opt.meta
+        return self.__class__.__dict__.get('Meta')
 
     def _gen_block_html(self, urls, key, **kwargs):
         for url in urls:
