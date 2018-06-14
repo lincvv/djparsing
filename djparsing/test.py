@@ -79,7 +79,7 @@ obj_pthonz = PythonzPars(
 class ItProgerPars(Parser):
     source = ExtraDataField(save_start_url=True)
     body = BodyCssSelect(
-        start_url='article > div.entry-image a',
+        start_url='article.box > div.entry-image a',
         body_count=7)
     img = ImgCssSelect('data-lazy-src')
     text = TextContentCssSelect()
@@ -91,7 +91,7 @@ class ItProgerPars(Parser):
 
 
 obj_itproger = ItProgerPars(
-    body="div.container div#content > article.post",
+    body="div#content > article.box",
     text="div.entry-container > div.entry-content > p",
     source=".post-title .title-box .entry-title a",
     title=".post-title > h1.entry-title",
@@ -102,9 +102,9 @@ obj_itproger = ItProgerPars(
 
 if __name__ == '__main__':
     obj_itproger.run(log=True)
-    obj_pthonz.run(log=True)
-    obj_habr_all.run(log=True)
-    obj_habr_blog.run(log=True)
+    # obj_pthonz.run(log=True)
+    # obj_habr_all.run(log=True)
+    # obj_habr_blog.run(log=True)
     print(strftime('[%H: %M: %S]'), end=' ')
     print('********************END*********************')
 

@@ -123,6 +123,7 @@ class Parser(object, metaclass=ParserMeta):
             yield self._get_html(url=url, **kwargs).cssselect(self.__getattribute__(key))[0]
 
     def _get_block_html(self, key, attr, body_count, start_url=False, **kwargs):
+        # returns an object HtmlElement
         count = body_count if body_count else 30
         try:
             if start_url:
@@ -140,6 +141,7 @@ class Parser(object, metaclass=ParserMeta):
             raise URLException(obj=self)
 
     def _get_html(self, url=None, web_driver=False, **kwargs) -> lxml.html.HtmlElement:
+        # returns the text of the html page
         if url is None:
             url = self.url
         if web_driver:
@@ -150,6 +152,7 @@ class Parser(object, metaclass=ParserMeta):
             driver.close()
         else:
             response = requests.get(url).text
+
         return fromstring(response)
 
     @classmethod
@@ -159,35 +162,39 @@ class Parser(object, metaclass=ParserMeta):
         return obj
 
     def uploaded_image(self, url, name):
+        # Returns the InMemoryUploadedFile object to the Django of the project, otherwise returns the URL of the image
+
         try:
             from django.core.files.uploadedfile import InMemoryUploadedFile
         except ImportError:
             return url
-        try:
-            os.chdir(PATH_TEMP)
-        except FileNotFoundError:
+
+        if not os.path.isdir(PATH_TEMP):
             os.makedirs(PATH_TEMP)
-            os.chdir(PATH_TEMP)
-        finally:
-            try:
-                resp_img = requests.get(url, stream=True)
-            except URLError:
-                return None
-            if resp_img.status_code == 200:
-                with open(name, 'wb') as img:
-                    resp_img.raw.decode_content = True
-                    shutil.copyfileobj(resp_img.raw, img)
-                image = Image.open(name)
-                image_io = BytesIO()
-                image.save(image_io, "png", optimize=True)
-                image_io.seek(0)
-                # urlretrieve(url, name)
-            else:
-                return None
-            try:
-                os.remove(os.path.join(PATH_TEMP, name))
-            except FileNotFoundError:
-                pass
+
+        os.chdir(PATH_TEMP)
+
+        try:
+            resp_img = requests.get(url, stream=True)
+        except URLError:
+            return None
+
+        if resp_img.status_code == 200:
+            with open(name, 'wb') as img:
+                resp_img.raw.decode_content = True
+                shutil.copyfileobj(resp_img.raw, img)
+            image = Image.open(name)
+            image_io = BytesIO()
+            image.save(image_io, "png", optimize=True)
+            image_io.seek(0)
+            # urlretrieve(url, name)
+        else:
+            return None
+
+        try:
+            os.remove(os.path.join(PATH_TEMP, name))
+        except FileNotFoundError:
+            pass
 
         return InMemoryUploadedFile(image_io, None, name, None, None, None)
 
@@ -198,6 +205,7 @@ class Parser(object, metaclass=ParserMeta):
             raise ValueError(e)
         else:
             query = model.objects.filter(title__iexact=data['title'])
+
         if query.exists():
             return None
         else:
@@ -228,8 +236,10 @@ class Parser(object, metaclass=ParserMeta):
     def run(self, log=False, create=True):
         parser = ResultParser(self)
         pars_result = self.__get_result(parser)
+
         if not create and not log:
             return pars_result
+
         for _, out_data in pars_result.items():
             if log:
                 self.log_output(out_data)

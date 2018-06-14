@@ -1,6 +1,7 @@
 
 class BaseCssSelect(object):
     """base class cssselect fields"""
+
     element_method = None
     extra_data = False
     attr = False
@@ -61,11 +62,13 @@ class AttrCssSelect(BaseCssSelect):
     def __init__(self, attr_data=None, *args, **kwargs):
         attr_data = self._check_attr_data_is_required(attr_data=attr_data, *args, **kwargs)
         super().__init__(*args, **kwargs)
+
         self.attr_data = attr_data
         self.element_method = self.element_method.format(attr_data)
 
     def _check_attr_data_is_required(self, *args, **kwargs):
         """check the required attribute attr_data and type"""
+
         kwargs_attr = kwargs.get(self.NAME_ATTRIBUTE, False)
         if not kwargs_attr and not args:
             raise AttributeError('object {} has a required attribute {}'.format(self, self.NAME_ATTRIBUTE))
@@ -83,6 +86,7 @@ class ImgCssSelect(AttrCssSelect):
 
     def __set_default_attr(self, *args, **kwargs) -> dict:
         """Set the default attr data attribute to 'src' for the ImgCSSSelect field"""
+
         try:
             if self._check_attr_data_is_required(*args, **kwargs):
                 return kwargs

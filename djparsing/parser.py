@@ -17,6 +17,7 @@ class ResultParser(object):
     def get_elem_result(self, block, obj_field):
         # returns the result of an element
         # obj_field this value is an object of type BaseCssSelect
+
         elem = block.cssselect(self.obj_parser.__getattribute__(obj_field.attr_name))[0]
         if obj_field.text:
             return elem.text
@@ -48,21 +49,26 @@ class ResultParser(object):
     def __iter__(self):
         for ind, block in enumerate(self.obj_parser.block_list):
             yield ind
+
             if self.obj_parser.is_field_coincidence():
                 field_result = self.get_field(block)
                 if not self.is_word_in_field(field=field_result):
                     continue
+
             for attr_name in self.obj_parser.cls_attr:
                 obj = self.get_object_field(attr_name)
+
                 if obj.save_start_url and hasattr(obj, 'extra_data'):
                     try:
                         yield {attr_name: self.obj_parser.get_page_url(ind=ind)}
                     except IndexError:
                         raise ValueError('Check the field with the attribute "start_url"')
                     continue
+
                 if obj.save_url:
                     yield {attr_name: self.obj_parser.url}
                     continue
+
                 if obj.many:
                     data_input = list()
                     for data in block.cssselect(self.obj_parser.__getattribute__(attr_name)):
@@ -72,6 +78,7 @@ class ResultParser(object):
                             data_input.append(data.text)
                     yield {attr_name: data_input}
                     continue
+
                 try:
                     pars_result = self.get_elem_result(block=block, obj_field=obj)
                 except IndexError:
@@ -79,13 +86,17 @@ class ResultParser(object):
                         continue
                     else:
                         raise FieldException(field=attr_name, obj=self.obj_parser)
+
                 if attr_name in self.obj_parser.get_fields_add_domain():
                     pars_result = urljoin(self.obj_parser.get_base_domain(), pars_result)
+
                 if attr_name == self.obj_parser.get_field_image() and pars_result:
                     # check the field ImgCssSelect and the result
+
                     pars_result = self.obj_parser.uploaded_image(
                         pars_result,
                         '{}.jpg'.format(hashlib.sha1(pars_result.encode('utf-8')).hexdigest())
                     )
+
                 yield {attr_name: pars_result}
 
