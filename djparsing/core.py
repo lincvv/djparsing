@@ -126,6 +126,7 @@ class Parser(object, metaclass=ParserMeta):
     def _get_block_html(self, key, attr, body_count, start_url=False, **kwargs):
         # returns an object HtmlElement
         count = body_count if body_count else 30
+
         try:
             if start_url:
                 for elem_url in self._get_html(**kwargs).cssselect(attr.start_url)[0:count]:
@@ -134,8 +135,11 @@ class Parser(object, metaclass=ParserMeta):
                         self._opt.page_url.append('{0}{1}'.format(self._opt.base_domain, elem_url.get("href")))
                     else:
                         self._opt.page_url.append(elem_url.get("href"))
+
                 return list(self._gen_block_html(self._opt.page_url, key, **kwargs))
+
             return self._get_html(**kwargs).cssselect(self.__getattribute__(key))[0:count]
+
         except IndexError:
             raise FieldException(field=key, obj=self)
         except MissingSchema:
@@ -174,7 +178,12 @@ class Parser(object, metaclass=ParserMeta):
         except ImportError:
             return url
 
-        if not os.path.isdir(PATH_TEMP):
+        # if not os.path.isdir(PATH_TEMP):
+        #     os.makedirs(PATH_TEMP)
+
+        try:
+            os.chdir(PATH_TEMP)
+        except FileNotFoundError:
             os.makedirs(PATH_TEMP)
 
         os.chdir(PATH_TEMP)
