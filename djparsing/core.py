@@ -159,7 +159,7 @@ class Parser(object, metaclass=ParserMeta):
                 driver.close()
             else:
                 response = requests.get(url).text
-        except ConnectionError:
+        except requests.exceptions.ConnectionError:
             return response
 
         return fromstring(response)
@@ -178,12 +178,7 @@ class Parser(object, metaclass=ParserMeta):
         except ImportError:
             return url
 
-        # if not os.path.isdir(PATH_TEMP):
-        #     os.makedirs(PATH_TEMP)
-
-        try:
-            os.chdir(PATH_TEMP)
-        except FileNotFoundError:
+        if not os.path.isdir(PATH_TEMP):
             os.makedirs(PATH_TEMP)
 
         os.chdir(PATH_TEMP)
