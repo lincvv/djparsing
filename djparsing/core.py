@@ -203,8 +203,7 @@ class Parser(object, metaclass=ParserMeta):
             image.save(image_io, "png", optimize=True)
             image_io.seek(0)
             # urlretrieve(url, name)
-        else:            else:
-                yield None
+        else:
             return None
 
         try:
