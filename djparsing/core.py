@@ -81,9 +81,10 @@ class Parser(object, metaclass=ParserMeta):
                     self._opt.list_domain.append(key)
                 if hasattr(attr, 'body'):
                     if attr.start_url:
-                        self.block_list = self._get_block_html(key, attr, attr.body_count, start_url=True, **kwargs)
-                    else:
-                        self.block_list = self._get_block_html(key, attr, attr.body_count, **kwargs)
+                        kwargs['start_url'] = True
+                    html = self._get_block_html(key, attr, attr.body_count, **kwargs)
+                    if html:
+                        self.block_list = html
                     continue
                 if hasattr(attr, 'img'):
                     self._opt.image = key
@@ -142,16 +143,20 @@ class Parser(object, metaclass=ParserMeta):
 
     def _get_html(self, url=None, web_driver=False, **kwargs) -> lxml.html.HtmlElement:
         # returns the text of the html page
-        if url is None:
-            url = self.url
-        if web_driver:
-            from selenium import webdriver
-            driver = webdriver.Firefox()
-            driver.get(url)
-            response = driver.page_source
-            driver.close()
-        else:
-            response = requests.get(url).text
+        response = None
+
+        url = url if url else self.url
+        try:
+            if web_driver:
+                from selenium import webdriver
+                driver = webdriver.Firefox()
+                driver.get(url)
+                response = driver.page_source
+                driver.close()
+            else:
+                response = requests.get(url).text
+        except ConnectionError:
+            return response
 
         return fromstring(response)
 

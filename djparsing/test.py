@@ -101,10 +101,11 @@ obj_itproger = ItProgerPars(
 
 
 if __name__ == '__main__':
-    obj_itproger.run(log=True)
-    # obj_pthonz.run(log=True)
+    # obj_itproger.run(log=True)
+    obj_pthonz.run(log=True)
     # obj_habr_all.run(log=True)
     # obj_habr_blog.run(log=True)
+    obj_realpython.run(log=True)
     print(strftime('[%H: %M: %S]'), end=' ')
     print('********************END*********************')
 
