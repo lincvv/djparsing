@@ -82,9 +82,9 @@ class Parser(object, metaclass=ParserMeta):
                 if hasattr(attr, 'body'):
                     if attr.start_url:
                         kwargs['start_url'] = True
-                    html = self._get_block_html(key, attr, attr.body_count, **kwargs)
-                    if html:
-                        self.block_list = html
+                    block_html = self._get_block_html(key, attr, attr.body_count, **kwargs)
+                    if block_html:
+                        self.block_list = block_html
                     continue
                 if hasattr(attr, 'img'):
                     self._opt.image = key
@@ -121,7 +121,9 @@ class Parser(object, metaclass=ParserMeta):
 
     def _gen_block_html(self, urls, key, **kwargs):
         for url in urls:
-            yield self._get_html(url=url, **kwargs).cssselect(self.__getattribute__(key))[0]
+            html = self._get_html(url=url, **kwargs)
+            if html is not None:
+                yield html.cssselect(self.__getattribute__(key))[0]
 
     def _get_block_html(self, key, attr, body_count, start_url=False, **kwargs):
         # returns an object HtmlElement
@@ -136,9 +138,13 @@ class Parser(object, metaclass=ParserMeta):
                     else:
                         self._opt.page_url.append(elem_url.get("href"))
 
-                return list(self._gen_block_html(self._opt.page_url, key, **kwargs))
+                return [i for i in self._gen_block_html(self._opt.page_url, key, **kwargs) if i is not None]
 
-            return self._get_html(**kwargs).cssselect(self.__getattribute__(key))[0:count]
+            html = self._get_html(**kwargs)
+
+            if html is not None:
+
+                return html.cssselect(self.__getattribute__(key))[0:count]
 
         except IndexError:
             raise FieldException(field=key, obj=self)
@@ -197,7 +203,8 @@ class Parser(object, metaclass=ParserMeta):
             image.save(image_io, "png", optimize=True)
             image_io.seek(0)
             # urlretrieve(url, name)
-        else:
+        else:            else:
+                yield None
             return None
 
         try:
