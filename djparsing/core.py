@@ -13,13 +13,15 @@ from lxml.html import fromstring
 # from memory_profiler import profile
 from requests.exceptions import MissingSchema
 from .exceptions import URLException, FieldException
-from .parser import ResultParser
+from .parser import ParserIt
 from .options import Options
 from .data import BaseCssSelect
 from .settings import PATH_TEMP
 
 
 def init(**kwargs):
+    # the decorator works when jango is installed,
+    # otherwise there will be an error that does not find the package
     from django.apps import apps
 
     def dec(cls):
@@ -64,7 +66,7 @@ class ParserMeta(type):
         return new_cls
 
 
-class Parser(object, metaclass=ParserMeta):
+class ParserData(object, metaclass=ParserMeta):
     __slots__ = ('url', 'add_field', 'block_list', 'page_url', '_opt', 'cls_attr', 'data_db')
 
     def __init__(self, url=None, **kwargs):
@@ -191,7 +193,7 @@ class Parser(object, metaclass=ParserMeta):
 
         try:
             resp_img = requests.get(url, stream=True)
-        except URLError:
+        except (URLError, requests.exceptions.ConnectionError):
             return None
 
         if resp_img.status_code == 200:
@@ -249,7 +251,7 @@ class Parser(object, metaclass=ParserMeta):
         return pars_result
 
     def run(self, log=False, create=True):
-        parser = ResultParser(self)
+        parser = ParserIt(self)
         pars_result = self.__get_result(parser)
 
         if not create and not log:

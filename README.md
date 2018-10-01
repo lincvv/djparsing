@@ -5,7 +5,7 @@ parser of the first data block (by date this is new) and saving in the specified
 
 Requirements
 -----------
-* python (3.4, 3.5, 3.6)
+* python (3.4, 3.5, 3.6б 3.7)
 * django (1.8, 1.9, 1.10, 1.11)
 * lxml (4.1.1)
 * cssselect (1.0.1)
@@ -27,11 +27,11 @@ class MyModel(models.Model):
     
 ```
 ```python
-from djparsing.core import Parser, init
+from djparsing.core import ParserData, init
 from djparsing import data
 
 @init(model='MyModel', app='my_app')
-class MyParserClass(Parser):
+class MyParserClass(ParserData):
     body = data.BodyCSSSelect()
     text = data.TextContentCSSSelect()
     source = data.AttrCSSSelect(attr_data='href') #Or set the first argument AttrCSSSelect('href')
@@ -75,7 +75,7 @@ pars_obj.run()  #if you do not need to save to the database and print the data t
     Example:
 ```python
 @init(model='MyModel', app='my_app')
-class MyParserClass(Parser):
+class MyParserClass(ParserData):
     body = data.BodyCSSSelect()
     text = data.TextContentCSSSelect()
     
@@ -110,7 +110,7 @@ how many objects are parsing
 
     Example:
 ```python
-class MyParserClass(Parser):
+class MyParserClass(ParserData):
     start = BodyCssSelect(start_url='ul.quest-tiles > li.quest-tile-1 > div.item-box > div.item-box-desc h4  a',
                           add_domain=True,
                           body_count=4)

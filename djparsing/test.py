@@ -1,5 +1,5 @@
 from time import sleep, strftime
-from djparsing.core import Parser
+from djparsing.core import ParserData
 from djparsing.data import BodyCssSelect, TextContentCssSelect, AttrCssSelect, TextCssSelect, ImgCssSelect, \
     ExtraDataField
 
@@ -7,7 +7,7 @@ print(strftime('[%H: %M: %S]'), end=' ')
 print('********************START*********************')
 
 
-class HabrBlog(Parser):
+class HabrBlog(ParserData):
     b = BodyCssSelect(body_count=13)
     text = TextContentCssSelect()
     source = AttrCssSelect(attr_data='href')
@@ -30,7 +30,7 @@ obj_habr_blog = HabrBlog(
 )
 
 LIST_WORDS = ['Python', 'Django', 'Питон', 'Flask', 'PyDev', 'sanic', 'aiohttp', '2018', 'vue', 'computer', '404',
-              'tproger']
+              'tproger', 'arm']
 
 
 class HabrAll(HabrBlog):
@@ -61,7 +61,7 @@ obj_realpython = RealPython(
 )
 
 
-class PythonzPars(Parser):
+class PythonzPars(ParserData):
     start = BodyCssSelect(start_url='div.listing_item > div.description > a', add_domain=True, body_count=45)
     source = AttrCssSelect(attr_data="src")
     title = AttrCssSelect("data-geopattern")
@@ -76,7 +76,7 @@ obj_pthonz = PythonzPars(
 )
 
 
-class ItProgerPars(Parser):
+class ItProgerPars(ParserData):
     source = ExtraDataField(save_start_url=True)
     body = BodyCssSelect(
         start_url='article.box > div.entry-image a',
@@ -101,10 +101,10 @@ obj_itproger = ItProgerPars(
 
 
 if __name__ == '__main__':
-    # obj_itproger.run(log=True)
+    obj_itproger.run(log=True)
     obj_pthonz.run(log=True)
-    # obj_habr_all.run(log=True)
-    # obj_habr_blog.run(log=True)
+    obj_habr_all.run(log=True)
+    obj_habr_blog.run(log=True)
     obj_realpython.run(log=True)
     print(strftime('[%H: %M: %S]'), end=' ')
     print('********************END*********************')

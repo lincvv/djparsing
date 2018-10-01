@@ -4,7 +4,7 @@ from djparsing.data import BaseCssSelect
 class ParserExceptions(Exception):
     default_detail = 'A parser error'
     default_field = 'system_error'
-    default_obj = 'Parser'
+    default_obj = 'ParserData'
 
     @staticmethod
     def _get_error(detail, field=None, obj=None):

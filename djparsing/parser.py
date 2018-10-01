@@ -4,14 +4,16 @@ from urllib.parse import urljoin
 from .exceptions import FieldException
 
 
-class ResultParser(object):
+class ParserIt(object):
     def __init__(self, obj_parser):
         self.obj_parser = obj_parser
 
     def __repr__(self):
-        return 'ResultParser({})'.format(self.obj_parser)
+        return 'ParserIt({})'.format(self.obj_parser)
 
     def get_object_field(self, field_name):
+        # returns the object field of the object parser
+
         return self.obj_parser.__class__.__dict__[field_name]
 
     def get_elem_result(self, block, obj_field):
@@ -27,6 +29,8 @@ class ResultParser(object):
             return elem.get(obj_field.attr_data)
 
     def get_field(self, block):
+        #returns the result of one field of the object parser
+
         field = self.obj_parser.get_field_coincidence()
         obj = self.get_object_field(field)
         try:
@@ -37,6 +41,8 @@ class ResultParser(object):
             return res_field
 
     def is_word_in_field(self, field):
+        #search words in field coincidence
+
         list_coincidence = self.obj_parser.get_list_coincidence()
         if not list_coincidence:
             detail = 'Check attribute'
