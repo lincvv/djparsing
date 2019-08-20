@@ -72,11 +72,6 @@ pars_obj.add_field['flag'] = True
 pars_obj.run()  #if you do not need to save to the database and print the data to the log, 
                 # add the argument log -> run(log=True) and redefine the method log_output(self, result):
 ```
-
-If you do not want to write data to the database or output to the log, use:
-```python
-data = pars_obj.run(create=False)
-```
     Example:
 ```python
 @init(model='MyModel', app='my_app')
@@ -87,6 +82,12 @@ class MyParserClass(ParserData):
     def log_output(self, result): # if you do not override the method, the result will be output to the terminal
         pass # and work further with the result
 ```
+
+If you do not want to write data to the database or output to the log, use:
+```python
+data = pars_obj.run(create=False)
+```
+
 Attributs
 =========
 ##### start_url
