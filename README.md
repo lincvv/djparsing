@@ -87,6 +87,7 @@ If you do not want to write data to the database or output to the log, use:
 ```python
 data = pars_obj.run(create=False)
 ```
+Note: Also a must create=False, when you are not working with django and base
 
 Attributs
 =========
