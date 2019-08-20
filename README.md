@@ -27,11 +27,11 @@ class MyModel(models.Model):
     
 ```
 ```python
-from djparsing.core import ParserData, init
+from djparsing.core import Parser, init
 from djparsing import data
 
 @init(model='MyModel', app='my_app')
-class MyParserClass(ParserData):
+class MyParserClass(Parser):
     body = data.BodyCSSSelect()
     text = data.TextContentCSSSelect()
     source = data.AttrCSSSelect(attr_data='href') #Or set the first argument AttrCSSSelect('href')
@@ -75,7 +75,7 @@ pars_obj.run()  #if you do not need to save to the database and print the data t
     Example:
 ```python
 @init(model='MyModel', app='my_app')
-class MyParserClass(ParserData):
+class MyParserClass(Parser):
     body = data.BodyCSSSelect()
     text = data.TextContentCSSSelect()
     
@@ -117,7 +117,7 @@ how many objects are parsing
 
     Example:
 ```python
-class MyParserClass(ParserData):
+class MyParserClass(Parser):
     start = BodyCssSelect(start_url='ul.quest-tiles > li.quest-tile-1 > div.item-box > div.item-box-desc h4  a',
                           add_domain=True,
                           body_count=4)
