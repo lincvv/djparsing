@@ -72,6 +72,11 @@ pars_obj.add_field['flag'] = True
 pars_obj.run()  #if you do not need to save to the database and print the data to the log, 
                 # add the argument log -> run(log=True) and redefine the method log_output(self, result):
 ```
+
+If you do not want to write data to the database or output to the log, use:
+```python
+data = pars_obj.run(create=False)
+```
     Example:
 ```python
 @init(model='MyModel', app='my_app')
