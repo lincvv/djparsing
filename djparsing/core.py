@@ -66,7 +66,7 @@ class ParserMeta(type):
         return new_cls
 
 
-class ParserData(object, metaclass=ParserMeta):
+class Parser(object, metaclass=ParserMeta):
     __slots__ = ('url', 'add_field', 'block_list', 'page_url', '_opt', 'cls_attr', 'data_db')
 
     def __init__(self, url=None, **kwargs):
@@ -161,12 +161,12 @@ class ParserData(object, metaclass=ParserMeta):
         try:
             if web_driver:
                 from selenium import webdriver
-                driver = webdriver.Firefox()
+                driver = webdriver.Firefox(executable_path=r'geckodriver.exe ')
                 driver.get(url)
                 response = driver.page_source
                 driver.close()
             else:
-                response = requests.get(url).text
+                response = requests.get(url, stream=True, headers={'User-agent': 'Mozilla/5.0'}).text
         except requests.exceptions.ConnectionError:
             return response
 
