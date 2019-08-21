@@ -161,13 +161,20 @@ class Parser(object, metaclass=ParserMeta):
         try:
             if web_driver:
                 from selenium import webdriver
-                driver = webdriver.Firefox(executable_path=r'geckodriver.exe ')
+                from sys import platform
+
+                if platform == 'win32':
+                    driver = webdriver.Firefox(executable_path=r'geckodriver.exe')
+                else:
+                    driver = webdriver.Firefox(executable_path=r'./geckodriver')
                 driver.get(url)
                 response = driver.page_source
                 driver.close()
             else:
                 response = requests.get(url, stream=True, headers={'User-agent': 'Mozilla/5.0'}).text
+
         except requests.exceptions.ConnectionError:
+
             return response
 
         return fromstring(response)
