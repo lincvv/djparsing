@@ -41,7 +41,7 @@ class ParserIt(object):
             return res_field
 
     def is_word_in_field(self, field):
-        #search words in field coincidence
+        # search words in field coincidence
 
         list_coincidence = self.obj_parser.get_list_coincidence()
         if not list_coincidence:
@@ -53,6 +53,7 @@ class ParserIt(object):
         return False
 
     def __iter__(self):
+        self.obj_parser.init_block_list()
         for ind, block in enumerate(self.obj_parser.block_list):
             yield ind
 
