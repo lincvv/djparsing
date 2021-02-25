@@ -20,7 +20,7 @@ from .settings import PATH_TEMP
 
 
 def init(**kwargs):
-    # the decorator works when jango is installed,
+    # the decorator works when Django is installed,
     # otherwise there will be an error that does not find the package
     from django.apps import apps
 
@@ -67,32 +67,17 @@ class ParserMeta(type):
 
 
 class Parser(object, metaclass=ParserMeta):
-    __slots__ = ('url', 'add_field', 'block_list', 'page_url', '_opt', 'cls_attr', 'data_db')
+    __slots__ = ('url', 'add_field', 'block_list', 'page_url', '_opt', 'cls_attr', 'data_db', 'kwargs_init')
 
     def __init__(self, url=None, **kwargs):
+        self.kwargs_init = kwargs
         self.url = url
         self.data_db = None
         self.cls_attr = set()
         self.add_field = dict()
+        self.block_list = None
         for key, value in kwargs.items():
             setattr(self, key, value)
-        for key, attr in self.__class__.__dict__.items():
-            if isinstance(attr, BaseCssSelect):
-                if attr.add_domain:
-                    self._opt.base_domain = self._opt.get_domain(self.url)
-                    self._opt.list_domain.append(key)
-                if hasattr(attr, 'body'):
-                    if attr.start_url:
-                        kwargs['start_url'] = True
-                    block_html = self._get_block_html(key, attr, attr.body_count, **kwargs)
-                    if block_html:
-                        self.block_list = block_html
-                    continue
-                if hasattr(attr, 'img'):
-                    self._opt.image = key
-                self.cls_attr.add(key)
-        if not hasattr(self, 'block_list'):
-            raise FieldException(detail='The required field', field='BodyCssSelect', obj=self.__class__)
 
     def __str__(self):
         return self.__class__.__name__
@@ -121,6 +106,26 @@ class Parser(object, metaclass=ParserMeta):
     def get_meta(self):
         return self.__class__.__dict__.get('Meta')
 
+    def init_block_list(self):
+        # initialization of data block fields
+        for key, attr in self.__class__.__dict__.items():
+            if isinstance(attr, BaseCssSelect):
+                if attr.add_domain:
+                    self._opt.base_domain = self._opt.get_domain(self.url)
+                    self._opt.list_domain.append(key)
+                if hasattr(attr, 'body'):
+                    if attr.start_url:
+                        self.kwargs_init['start_url'] = True
+                    block_html = self._get_block_html(key, attr, attr.body_count, **self.kwargs_init)
+                    if block_html:
+                        self.block_list = block_html
+                    continue
+                if hasattr(attr, 'img'):
+                    self._opt.image = key
+                self.cls_attr.add(key)
+        if not hasattr(self, 'block_list'):
+            raise FieldException(detail='The required field', field='BodyCssSelect', obj=self.__class__)
+
     def _gen_block_html(self, urls, key, **kwargs):
         for url in urls:
             html = self._get_html(url=url, **kwargs)
@@ -130,11 +135,9 @@ class Parser(object, metaclass=ParserMeta):
     def _get_block_html(self, key, attr, body_count, start_url=False, **kwargs):
         # returns an object HtmlElement
         count = body_count if body_count else 30
-
         try:
             if start_url:
                 for elem_url in self._get_html(**kwargs).cssselect(attr.start_url)[0:count]:
-
                     if self._opt.base_domain:
                         self._opt.page_url.append('{0}{1}'.format(self._opt.base_domain, elem_url.get("href")))
                     else:
@@ -145,7 +148,6 @@ class Parser(object, metaclass=ParserMeta):
             html = self._get_html(**kwargs)
 
             if html is not None:
-
                 return html.cssselect(self.__getattribute__(key))[0:count]
 
         except IndexError:
@@ -186,7 +188,8 @@ class Parser(object, metaclass=ParserMeta):
         return obj
 
     def uploaded_image(self, url, name):
-        # Returns the InMemoryUploadedFile object to the Django of the project, otherwise returns the URL of the image
+        # Returns the InMemoryUploadedFile object to the Django of the project,
+        # otherwise returns the URL of the image
 
         try:
             from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -223,6 +226,7 @@ class Parser(object, metaclass=ParserMeta):
         return InMemoryUploadedFile(image_io, None, name, None, None, None)
 
     def create(self, data):
+        # creating a record in the database
         try:
             model = self.get_meta().model
         except () as e:
@@ -237,43 +241,39 @@ class Parser(object, metaclass=ParserMeta):
             return self.data_db
 
     def is_field_coincidence(self):
+        # checking for the presence of a field coincidence
         if self.get_meta() and self.get_field_coincidence():
             return True
         return False
 
-    def log_output(self, it):
+    def log_output(self, data):
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
-        for val in it:
-            logging.info('{} :\n {}'.format(self, val))
+        logging.info('{} :\n {}'.format(self, data))
 
     @staticmethod
     def __get_result(it):
+        # iterate over the data
         pars_result = dict()
-        key_ind = int()
         for res in it:
             if isinstance(res, int):
-                pars_result[res] = dict()
-                key_ind = res
+                if res > 0:
+                    yield pars_result
+                    pars_result.clear()
             else:
-                pars_result[key_ind].update(res)
-        return pars_result
+                pars_result.update(res)
+        yield pars_result
 
     def run(self, log=False, create=True):
+        # Parser launch
+
         parser = ParserIt(self)
 
-        if not create and not log:
-            return parser
-
-        if log and not create:
-            self.log_output(parser)
-            return 0
-
-        pars_result = self.__get_result(parser)
-
-        for _, out_data in pars_result.items():
+        for out_data in self.__get_result(parser):
             if log:
                 self.log_output(out_data)
-            if out_data:
+            if create:
                 out_data.update(self.add_field)
                 self.create(out_data)
 
+    def get_parser_iterator(self):
+        return ParserIt(self)
