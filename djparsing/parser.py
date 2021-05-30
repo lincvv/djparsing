@@ -67,7 +67,6 @@ class ParserIt(object):
                 # attr_name - имя атрибута(обьекта) BaseCssSelect и наследников
                 obj_attr_field = self.get_object_field(attr_name)
                 # obj_attr_field - обьект BaseCssSelect и наследников
-                print(obj_attr_field, attr_name)
 
                 if obj_attr_field.save_start_url and hasattr(obj_attr_field, 'extra_data'):
                     try:
