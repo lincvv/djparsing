@@ -20,7 +20,7 @@ from .settings import PATH_TEMP
 
 
 def init(**kwargs):
-    # the decorator works when jango is installed,
+    # the decorator works when Django is installed,
     # otherwise there will be an error that does not find the package
     from django.apps import apps
 
@@ -107,6 +107,7 @@ class Parser(object, metaclass=ParserMeta):
         return self.__class__.__dict__.get('Meta')
 
     def init_block_list(self):
+        # initialization of data block fields
         for key, attr in self.__class__.__dict__.items():
             if isinstance(attr, BaseCssSelect):
                 if attr.add_domain:
@@ -187,7 +188,8 @@ class Parser(object, metaclass=ParserMeta):
         return obj
 
     def uploaded_image(self, url, name):
-        # Returns the InMemoryUploadedFile object to the Django of the project, otherwise returns the URL of the image
+        # Returns the InMemoryUploadedFile object to the Django of the project,
+        # otherwise returns the URL of the image
 
         try:
             from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -224,6 +226,7 @@ class Parser(object, metaclass=ParserMeta):
         return InMemoryUploadedFile(image_io, None, name, None, None, None)
 
     def create(self, data):
+        # creating a record in the database
         try:
             model = self.get_meta().model
         except () as e:
@@ -238,6 +241,7 @@ class Parser(object, metaclass=ParserMeta):
             return self.data_db
 
     def is_field_coincidence(self):
+        # checking for the presence of a field coincidence
         if self.get_meta() and self.get_field_coincidence():
             return True
         return False
@@ -248,6 +252,7 @@ class Parser(object, metaclass=ParserMeta):
 
     @staticmethod
     def __get_result(it):
+        # iterate over the data
         pars_result = dict()
         for res in it:
             if isinstance(res, int):
@@ -259,6 +264,8 @@ class Parser(object, metaclass=ParserMeta):
         yield pars_result
 
     def run(self, log=False, create=True):
+        # Parser launch
+
         parser = ParserIt(self)
 
         for out_data in self.__get_result(parser):

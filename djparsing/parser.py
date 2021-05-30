@@ -29,7 +29,7 @@ class ParserIt(object):
             return elem.get(obj_field.attr_data)
 
     def get_field(self, block):
-        #returns the result of one field of the object parser
+        # returns the result of one field of the object parser
 
         field = self.obj_parser.get_field_coincidence()
         obj = self.get_object_field(field)
